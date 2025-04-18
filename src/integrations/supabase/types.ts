@@ -9,30 +9,60 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          id: string
+          updated_at: string | null
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          id: string
+          updated_at?: string | null
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          username?: string | null
+        }
+        Relationships: []
+      }
       reviews: {
         Row: {
           created_at: string
           id: number
+          movie_id: string | null
+          review_text: string | null
           sentiment: string | null
           stars: number | null
-          "user name": string | null
-          "user review": string | null
+          user_id: string | null
+          username: string | null
         }
         Insert: {
           created_at?: string
           id?: number
+          movie_id?: string | null
+          review_text?: string | null
           sentiment?: string | null
           stars?: number | null
-          "user name"?: string | null
-          "user review"?: string | null
+          user_id?: string | null
+          username?: string | null
         }
         Update: {
           created_at?: string
           id?: number
+          movie_id?: string | null
+          review_text?: string | null
           sentiment?: string | null
           stars?: number | null
-          "user name"?: string | null
-          "user review"?: string | null
+          user_id?: string | null
+          username?: string | null
         }
         Relationships: []
       }
@@ -41,7 +71,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_sentiment: {
+        Args: { review_text: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
