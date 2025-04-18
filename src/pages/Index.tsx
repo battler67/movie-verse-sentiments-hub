@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
@@ -7,8 +6,9 @@ import MovieCard from '@/components/movie/MovieCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Film, TrendingUp, Star, Search } from 'lucide-react';
-import { getFeaturedMovies, getTrendingMovies, GENRES, Movie, getMoviesByGenre } from '../services/movieService';
+import { getFeaturedMovies, getTrendingMovies, GENRES, getMoviesByGenre } from '../services/movieCollectionService';
 import { useToast } from '@/hooks/use-toast';
+import type { Movie } from '@/types/movie.types';
 
 const Index = () => {
   const [featuredMovies, setFeaturedMovies] = useState<Movie[]>([]);
@@ -56,7 +56,6 @@ const Index = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      // Here we would redirect to a search results page
       navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
     }
   };
@@ -66,7 +65,6 @@ const Index = () => {
   };
   
   const handleExploreClick = () => {
-    // Scroll to search section
     const searchElement = document.getElementById('search-section');
     if (searchElement) {
       searchElement.scrollIntoView({ behavior: 'smooth' });
@@ -78,7 +76,6 @@ const Index = () => {
       <Navbar />
       
       <main className="flex-1">
-        {/* Hero Section */}
         <section className="hero-gradient py-16 md:py-24">
           <div className="container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center space-y-5">
@@ -95,7 +92,6 @@ const Index = () => {
           </div>
         </section>
         
-        {/* Search Section */}
         <section id="search-section" className="py-10 bg-movie-dark">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <form onSubmit={handleSearch} className="max-w-2xl mx-auto">
@@ -118,7 +114,6 @@ const Index = () => {
           </div>
         </section>
         
-        {/* Categories Section */}
         <section className="py-10 bg-movie-dark">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
@@ -139,7 +134,6 @@ const Index = () => {
           </div>
         </section>
         
-        {/* Genre-specific Movies Section (if a genre is selected) */}
         {selectedGenre && (
           <section className="py-16">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -173,7 +167,6 @@ const Index = () => {
           </section>
         )}
         
-        {/* Featured Movies Section (if no genre is selected) */}
         {!selectedGenre && (
           <section className="py-16">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -203,7 +196,6 @@ const Index = () => {
           </section>
         )}
         
-        {/* Trending Movies Section (if no genre is selected) */}
         {!selectedGenre && (
           <section className="py-16 bg-movie-dark">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
