@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Search, User, Film } from 'lucide-react';
+import { Search, User, Film, Info } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
@@ -13,9 +13,12 @@ const Navbar = () => {
           <div className="flex items-center">
             <Link to="/" className="flex items-center space-x-2">
               <Film size={24} className="text-movie-primary" />
-              <span className="text-xl font-bold bg-gradient-to-r from-movie-primary to-movie-secondary bg-clip-text text-transparent">
-                MovieVerse
-              </span>
+              <div className="flex flex-col">
+                <span className="text-xl font-bold bg-gradient-to-r from-movie-primary to-movie-secondary bg-clip-text text-transparent">
+                  Moodies
+                </span>
+                <span className="text-xs text-white/60 italic">bcuz every review has a vibe</span>
+              </div>
             </Link>
           </div>
           
@@ -31,6 +34,12 @@ const Navbar = () => {
           </div>
           
           <div className="flex items-center space-x-4">
+            <Link to="/about">
+              <Button variant="ghost" size="sm" className="text-white/80 hover:text-white">
+                <Info size={16} className="mr-1" />
+                About
+              </Button>
+            </Link>
             <Link to="/login">
               <Button variant="ghost" size="sm" className="text-white/80 hover:text-white">
                 Sign In
