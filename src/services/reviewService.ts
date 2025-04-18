@@ -11,12 +11,23 @@ export interface ReviewData {
 
 export const submitReview = async (reviewData: ReviewData) => {
   try {
+    // First get the user session
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    // Then insert the review with the user_id
     const { error } = await supabase
       .from('reviews')
-      .insert([{
-        ...reviewData,
-        user_id: supabase.auth.getUser().then(({ data }) => data.user?.id),
-      }]);
+      .insert({
+        movie_id: reviewData.movie_id,
+        stars: reviewData.stars,
+        review_text: reviewData.review_text,
+        username: reviewData.username,
+        user_id: user.id,
+      });
 
     if (error) throw error;
 
