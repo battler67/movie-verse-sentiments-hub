@@ -1,15 +1,17 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Search, User, Film, Info } from 'lucide-react';
+import { Search, User, Film, Info, Bookmark } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { useWatchlist } from '@/contexts/WatchlistContext';
 
 const Navbar = () => {
+  const { watchlist } = useWatchlist();
+
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-white/5 bg-movie-darker/80 backdrop-blur-md">
+    <nav className="bg-movie-darker border-b border-white/5 sticky top-0 z-50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
+        <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
             <Link to="/" className="flex items-center space-x-2">
               <Film size={24} className="text-movie-primary" />
@@ -45,10 +47,16 @@ const Navbar = () => {
                 Sign In
               </Button>
             </Link>
-            <Link to="/signup">
-              <Button className="bg-movie-primary hover:bg-movie-primary/90">
-                Sign Up
-              </Button>
+            <Link 
+              to="/watchlist"
+              className="relative p-2 text-white/70 hover:text-white focus:outline-none"
+            >
+              <Bookmark size={20} />
+              {watchlist.length > 0 && (
+                <span className="absolute top-0 right-0 inline-flex items-center justify-center w-4 h-4 text-xs font-bold text-white bg-movie-primary rounded-full">
+                  {watchlist.length}
+                </span>
+              )}
             </Link>
           </div>
         </div>
@@ -64,7 +72,7 @@ const Navbar = () => {
           </div>
         </div>
       </div>
-    </header>
+    </nav>
   );
 };
 

@@ -7,7 +7,9 @@ import MovieHeader from '@/components/movie/MovieHeader';
 import MovieDetails from '@/components/movie/MovieDetails';
 import ReviewSection from '@/components/movie/ReviewSection';
 import StreamingLinks from '@/components/movie/StreamingLinks';
+import SimilarMovies from '@/components/movie/SimilarMovies';
 import { fetchMovieById } from '@/services/movieService';
+import { fetchMovieVideos, getOfficialTrailer, TmdbVideo } from '@/services/tmdbService';
 import { Movie } from '@/types/movie.types';
 import { useToast } from '@/hooks/use-toast';
 
@@ -32,6 +34,7 @@ const STREAMING_PROVIDERS = [
 const MovieDetail = () => {
   const { id } = useParams<{ id: string }>();
   const [movie, setMovie] = useState<Movie | null>(null);
+  const [trailer, setTrailer] = useState<TmdbVideo | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   
@@ -40,8 +43,15 @@ const MovieDetail = () => {
       try {
         if (id) {
           setLoading(true);
+          
+          // Fetch movie details
           const movieData = await fetchMovieById(id);
           setMovie(movieData);
+          
+          // Fetch movie videos/trailers
+          const videos = await fetchMovieVideos(id);
+          const officialTrailer = getOfficialTrailer(videos);
+          setTrailer(officialTrailer);
         }
       } catch (error) {
         console.error('Error fetching movie:', error);
@@ -57,6 +67,11 @@ const MovieDetail = () => {
     
     loadMovie();
   }, [id, toast]);
+
+  useEffect(() => {
+    // Scroll to top when movie changes
+    window.scrollTo(0, 0);
+  }, [id]);
 
   if (loading) {
     return (
@@ -109,7 +124,7 @@ const MovieDetail = () => {
         </div>
         
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 -mt-32 md:-mt-40 lg:-mt-48 relative z-10">
-          <MovieHeader movie={movie} />
+          <MovieHeader movie={movie} trailer={trailer} />
           <MovieDetails movie={movie} />
           
           {/* Streaming Section */}
@@ -118,7 +133,29 @@ const MovieDetail = () => {
             <StreamingLinks providers={STREAMING_PROVIDERS} />
           </div>
           
+          {/* Similar Movies */}
+          {id && <SimilarMovies movieId={id} />}
+          
           <ReviewSection movieId={movie.id} />
+
+          {/* TMDB Attribution */}
+          <div className="mt-12 mb-6 text-center">
+            <p className="text-xs text-white/40">
+              This product uses the TMDB API but is not endorsed or certified by TMDB.
+            </p>
+            <a 
+              href="https://www.themoviedb.org" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-block mt-2"
+            >
+              <img 
+                src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_short-8e7b30f73a4020692ccca9c88bafe5dcb6f8a62a4c6bc55cd9ba82bb2cd95f6c.svg" 
+                alt="TMDB Logo" 
+                className="h-6" 
+              />
+            </a>
+          </div>
         </div>
       </main>
       

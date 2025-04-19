@@ -1,12 +1,16 @@
 
 import { Film, Star, Calendar, Clock } from 'lucide-react';
 import { Movie } from '@/types/movie.types';
+import WatchlistButton from './WatchlistButton';
+import TrailerPlayer from './TrailerPlayer';
+import { TmdbVideo } from '@/services/tmdbService';
 
 interface MovieHeaderProps {
   movie: Movie;
+  trailer: TmdbVideo | null;
 }
 
-const MovieHeader = ({ movie }: MovieHeaderProps) => {
+const MovieHeader = ({ movie, trailer }: MovieHeaderProps) => {
   return (
     <div className="flex flex-col md:flex-row gap-8">
       <div className="w-full md:w-1/4 lg:w-1/5">
@@ -22,6 +26,11 @@ const MovieHeader = ({ movie }: MovieHeaderProps) => {
               <Film size={64} className="text-white/20" />
             </div>
           )}
+        </div>
+        
+        <div className="mt-4 flex flex-col space-y-2">
+          <WatchlistButton movie={movie} className="w-full" />
+          {trailer && <TrailerPlayer trailer={trailer} movieTitle={movie.title} />}
         </div>
       </div>
       
