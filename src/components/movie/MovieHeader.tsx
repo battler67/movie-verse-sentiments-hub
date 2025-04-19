@@ -1,6 +1,6 @@
 
 import { Film, Star, Calendar, Clock } from 'lucide-react';
-import { Movie } from '@/services/movieService';
+import { Movie } from '@/types/movie.types';
 
 interface MovieHeaderProps {
   movie: Movie;

@@ -1,6 +1,6 @@
 
 import { Award, DollarSign } from 'lucide-react';
-import { Movie } from '@/services/movieService';
+import { Movie } from '@/types/movie.types';
 
 interface MovieDetailsProps {
   movie: Movie;

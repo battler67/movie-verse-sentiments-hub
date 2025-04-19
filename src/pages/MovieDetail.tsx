@@ -7,7 +7,8 @@ import MovieHeader from '@/components/movie/MovieHeader';
 import MovieDetails from '@/components/movie/MovieDetails';
 import ReviewSection from '@/components/movie/ReviewSection';
 import StreamingLinks from '@/components/movie/StreamingLinks';
-import { fetchMovieById, Movie } from '@/services/movieService';
+import { fetchMovieById } from '@/services/movieService';
+import { Movie } from '@/types/movie.types';
 import { useToast } from '@/hooks/use-toast';
 
 const STREAMING_PROVIDERS = [

@@ -1,9 +1,11 @@
 
 import { toast } from "sonner";
 import { Movie } from '@/types/movie.types';
-import { GENRE_MOVIE_MAPPING } from '@/constants/movieData';
+import { GENRE_MOVIE_MAPPING, GENRES } from '@/constants/movieData';
 import { movieCache } from '@/utils/movieCache';
 import { fetchMovieById } from './movieService';
+
+export { GENRES };
 
 export const getMoviesByGenre = async (genre: string): Promise<Movie[]> => {
   const cachedMovies = movieCache.getCachedGenreMovies(genre);

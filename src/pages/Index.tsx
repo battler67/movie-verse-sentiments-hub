@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
@@ -6,7 +7,7 @@ import MovieCard from '@/components/movie/MovieCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Film, TrendingUp, Star, Search } from 'lucide-react';
-import { getFeaturedMovies, getTrendingMovies, GENRES, getMoviesByGenre } from '../services/movieCollectionService';
+import { getFeaturedMovies, getTrendingMovies, getMoviesByGenre, GENRES } from '@/services/movieCollectionService';
 import { useToast } from '@/hooks/use-toast';
 import type { Movie } from '@/types/movie.types';
 

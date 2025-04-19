@@ -1,10 +1,8 @@
 
 import { toast } from "sonner";
-import { OMDB_API_KEY, OMDB_API_URL, GENRE_MOVIE_MAPPING } from '@/constants/movieData';
+import { OMDB_API_KEY, OMDB_API_URL } from '@/constants/movieData';
 import { Movie, OmdbMovie } from '@/types/movie.types';
 import { movieCache } from '@/utils/movieCache';
-
-export { GENRES } from '@/constants/movieData';
 
 const transformOmdbToMovie = (data: OmdbMovie): Movie => ({
   id: data.imdbID,
