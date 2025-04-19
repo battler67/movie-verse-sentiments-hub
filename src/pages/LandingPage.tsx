@@ -2,7 +2,15 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Film, Play, Star, Users } from 'lucide-react';
+import { Film, Play, Star, Users, Phone } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+
+const teamMembers = [
+  { name: 'R Murali', contact: '9063097314', img: '/placeholder.svg' },
+  { name: 'Yashoda', contact: '9392811632', img: '/placeholder.svg' },
+  { name: 'Madhava', contact: '+91 6300 981 252', img: '/placeholder.svg' },
+  { name: 'Rajesh', contact: '+91 6302 118 329', img: '/placeholder.svg' },
+];
 
 const LandingPage = () => {
   return (
@@ -95,6 +103,30 @@ const LandingPage = () => {
             <p className="text-white/70">
               Connect with fellow film buffs. Discuss theories, share recommendations, and discover hidden cinematic gems.
             </p>
+          </div>
+        </div>
+        
+        <div className="mt-24">
+          <h2 className="text-3xl font-bold mb-12 text-center">Our Team</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {teamMembers.map((member, index) => (
+              <Card key={index} className="bg-movie-dark/70 border-white/10">
+                <CardContent className="p-6 text-center">
+                  <div className="w-24 h-24 rounded-full bg-movie-primary/20 mx-auto mb-4 overflow-hidden">
+                    <img 
+                      src={member.img} 
+                      alt={member.name} 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <h3 className="text-xl font-medium mb-1">{member.name}</h3>
+                  <div className="flex items-center justify-center text-white/70 space-x-1">
+                    <Phone size={14} />
+                    <span>{member.contact}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
       </main>
