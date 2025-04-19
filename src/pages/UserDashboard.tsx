@@ -55,8 +55,16 @@ const UserDashboard = () => {
       color: ratingColors[index]
     }));
 
+    const chartConfig = {
+      rating1: { color: '#ef4444' },
+      rating2: { color: '#f97316' },
+      rating3: { color: '#facc15' },
+      rating4: { color: '#84cc16' },
+      rating5: { color: '#22c55e' },
+    };
+
     return (
-      <ResponsiveContainer width="100%" height={300}>
+      <ChartContainer config={chartConfig}>
         <PieChart>
           <Pie
             data={data}
@@ -73,10 +81,10 @@ const UserDashboard = () => {
               <Cell key={`cell-${index}`} fill={entry.color} />
             ))}
           </Pie>
-          <Tooltip content={<ChartTooltipContent />} />
+          <ChartTooltip content={<ChartTooltipContent />} />
           <Legend />
         </PieChart>
-      </ResponsiveContainer>
+      </ChartContainer>
     );
   };
 
@@ -93,16 +101,20 @@ const UserDashboard = () => {
       };
     });
 
+    const chartConfig = {
+      reviews: { color: '#8884d8' }
+    };
+
     return (
-      <ResponsiveContainer width="100%" height={300}>
+      <ChartContainer config={chartConfig}>
         <BarChart data={data}>
           <XAxis dataKey="name" />
           <YAxis />
-          <Tooltip content={<ChartTooltipContent />} />
+          <ChartTooltip content={<ChartTooltipContent />} />
           <Legend />
           <Bar dataKey="reviews" fill="#8884d8" name="Reviews" />
         </BarChart>
-      </ResponsiveContainer>
+      </ChartContainer>
     );
   };
 
