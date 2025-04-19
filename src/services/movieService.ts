@@ -1,7 +1,6 @@
-
 import { toast } from "sonner";
 import { TMDB_API_URL, TMDB_API_READ_TOKEN } from '@/constants/movieData';
-import { Movie, OmdbMovie } from '@/types/movie.types';
+import { Movie } from '@/types/movie.types';
 import { movieCache } from '@/utils/movieCache';
 
 export const fetchMovieById = async (id: string): Promise<Movie | null> => {
@@ -11,24 +10,26 @@ export const fetchMovieById = async (id: string): Promise<Movie | null> => {
   }
 
   try {
-    // Use TMDB API instead of OMDB
-    const response = await fetch(`${TMDB_API_URL}/movie/${id}?append_to_response=credits`, {
+    const response = await fetch(`${TMDB_API_URL}/movie/${id}?append_to_response=credits,videos`, {
       headers: {
         'Authorization': `Bearer ${TMDB_API_READ_TOKEN}`,
         'Content-Type': 'application/json'
       }
     });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
     const data = await response.json();
     
     if (data.id) {
-      // Extract director and writers from credits
       const director = data.credits?.crew?.find((person: any) => person.job === 'Director')?.name || '';
       const writers = data.credits?.crew
         ?.filter((person: any) => ['Writer', 'Screenplay'].includes(person.job))
         ?.map((person: any) => person.name)
         ?.join(', ') || '';
       
-      // Extract cast
       const actors = data.credits?.cast
         ?.slice(0, 5)
         ?.map((person: any) => person.name)
@@ -50,12 +51,11 @@ export const fetchMovieById = async (id: string): Promise<Movie | null> => {
         actors,
         plot: data.overview,
         writer: writers,
-        awards: '', // TMDB doesn't provide awards
+        awards: '',
         runtime: data.runtime ? `${data.runtime} min` : undefined,
-        boxOffice: '', // TMDB doesn't provide box office
+        boxOffice: data.revenue ? `$${data.revenue.toLocaleString()}` : '',
         imdbRating: data.vote_average.toFixed(1),
         
-        // Additional TMDB fields
         adult: data.adult,
         budget: data.budget,
         imdbId: data.imdb_id,
@@ -66,7 +66,9 @@ export const fetchMovieById = async (id: string): Promise<Movie | null> => {
         spokenLanguages: data.spoken_languages,
         voteCount: data.vote_count,
         tagline: data.tagline,
-        status: data.status
+        status: data.status,
+        
+        videos: data.videos?.results || []
       };
       
       movieCache.setCachedMovie(id, movie);
@@ -84,16 +86,24 @@ export const searchMovies = async (query: string): Promise<Movie[]> => {
   if (!query) return [];
   
   try {
-    const response = await fetch(`${TMDB_API_URL}/search/movie?query=${encodeURIComponent(query)}`, {
-      headers: {
-        'Authorization': `Bearer ${TMDB_API_READ_TOKEN}`,
-        'Content-Type': 'application/json'
+    const response = await fetch(
+      `${TMDB_API_URL}/search/movie?query=${encodeURIComponent(query)}&include_adult=false`, 
+      {
+        headers: {
+          'Authorization': `Bearer ${TMDB_API_READ_TOKEN}`,
+          'Content-Type': 'application/json'
+        }
       }
-    });
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
     const data = await response.json();
     
     if (data.results) {
-      const movies = data.results.slice(0, 10).map((result: any) => ({
+      return data.results.slice(0, 10).map((result: any) => ({
         id: result.id.toString(),
         title: result.title,
         year: result.release_date ? result.release_date.split('-')[0] : '',
@@ -107,10 +117,11 @@ export const searchMovies = async (query: string): Promise<Movie[]> => {
           ? `https://image.tmdb.org/t/p/original${result.backdrop_path}` 
           : undefined,
         releaseDate: result.release_date,
-        voteCount: result.vote_count
+        voteCount: result.vote_count,
+        adult: result.adult,
+        popularity: result.popularity,
+        genres: result.genre_ids || []
       }));
-      
-      return movies;
     }
     return [];
   } catch (error) {
@@ -120,7 +131,6 @@ export const searchMovies = async (query: string): Promise<Movie[]> => {
   }
 };
 
-// New function to search movies by genre
 export const searchMoviesByGenre = async (genreId: string): Promise<Movie[]> => {
   try {
     const response = await fetch(`${TMDB_API_URL}/discover/movie?with_genres=${genreId}`, {
