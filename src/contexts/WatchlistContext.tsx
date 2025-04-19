@@ -1,6 +1,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Movie } from '@/types/movie.types';
+import { toast } from 'sonner';
 
 type WatchlistItem = {
   id: string;
@@ -78,3 +79,4 @@ export const useWatchlist = () => {
   }
   return context;
 };
+
