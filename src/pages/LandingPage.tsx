@@ -2,11 +2,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Film, Play, Star, Users, Phone } from 'lucide-react';
+import { Film, Play, Star, Users, Phone, Twitter } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 
 const teamMembers = [
-  { name: 'R Murali', contact: '9063097314', img: '/placeholder.svg' },
+  { name: 'R Murali', contact: '9063097314', img: '/placeholder.svg', twitter: 'https://x.com/MuraliVard77060' },
   { name: 'Yashoda', contact: '9392811632', img: '/placeholder.svg' },
   { name: 'Madhava', contact: '+91 6300 981 252', img: '/placeholder.svg' },
   { name: 'Rajesh', contact: '+91 6302 118 329', img: '/placeholder.svg' },
@@ -124,6 +124,17 @@ const LandingPage = () => {
                     <Phone size={14} />
                     <span>{member.contact}</span>
                   </div>
+                  {member.twitter && (
+                    <a 
+                      href={member.twitter}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2 inline-flex items-center text-blue-400 hover:text-blue-300"
+                    >
+                      <Twitter size={14} className="mr-1" />
+                      <span className="text-sm">Follow on Twitter</span>
+                    </a>
+                  )}
                 </CardContent>
               </Card>
             ))}
@@ -134,18 +145,29 @@ const LandingPage = () => {
       <footer className="container mx-auto px-4 py-8 text-center text-white/60 text-sm">
         <p>© {new Date().getFullYear()} MovieVerse. All rights reserved.</p>
         <p className="mt-2">This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
-        <a 
-          href="https://www.themoviedb.org" 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="inline-block mt-2"
-        >
-          <img 
-            src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_short-8e7b30f73a4020692ccca9c88bafe5dcb6f8a62a4c6bc55cd9ba82bb2cd95f6c.svg" 
-            alt="TMDB Logo" 
-            className="h-6" 
-          />
-        </a>
+        <div className="mt-4 flex justify-center space-x-4">
+          <a 
+            href="https://www.themoviedb.org" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="inline-block"
+          >
+            <img 
+              src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_short-8e7b30f73a4020692ccca9c88bafe5dcb6f8a62a4c6bc55cd9ba82bb2cd95f6c.svg" 
+              alt="TMDB Logo" 
+              className="h-6" 
+            />
+          </a>
+          <a 
+            href="https://x.com/MuraliVard77060" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="inline-flex items-center text-white/60 hover:text-white"
+          >
+            <Twitter size={18} className="mr-1" />
+            <span>Follow Us</span>
+          </a>
+        </div>
       </footer>
     </div>
   );

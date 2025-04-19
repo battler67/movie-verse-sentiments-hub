@@ -28,6 +28,10 @@ const Footer = () => {
             <Link to="/privacy" className="text-sm text-white/60 hover:text-white">
               Privacy Policy
             </Link>
+            {/* Add dashboard link */}
+            <Link to="/dashboard" className="text-sm text-white/60 hover:text-white">
+              My Dashboard
+            </Link>
           </div>
           
           <div className="flex items-center space-x-4">
@@ -40,7 +44,7 @@ const Footer = () => {
               <Github size={18} />
             </a>
             <a
-              href="https://twitter.com"
+              href="https://x.com/MuraliVard77060"
               target="_blank"
               rel="noopener noreferrer"
               className="text-white/60 hover:text-white"
@@ -52,7 +56,7 @@ const Footer = () => {
         
         <div className="mt-8 text-center text-xs text-white/40">
           <p>© {new Date().getFullYear()} Moodies. All rights reserved.</p>
-          <p className="mt-1">Movie data provided by OMDB API.</p>
+          <p className="mt-1">Movie data provided by TMDB API.</p>
         </div>
       </div>
     </footer>

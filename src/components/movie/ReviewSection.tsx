@@ -9,7 +9,7 @@ import ReviewCard from './ReviewCard';
 import SentimentTag from './SentimentTag';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
-import { getMovieReviews } from '@/services/reviewService';
+import { getMovieReviews, submitReview, ReviewData } from '@/services/reviewService';
 
 interface ReviewSectionProps {
   movieId: string;
@@ -26,9 +26,15 @@ const ReviewSection = ({ movieId }: ReviewSectionProps) => {
   useEffect(() => {
     const loadReviews = async () => {
       setIsLoading(true);
-      const reviewData = await getMovieReviews(movieId);
-      setReviews(reviewData);
-      setIsLoading(false);
+      try {
+        const reviewData = await getMovieReviews(movieId);
+        setReviews(reviewData);
+      } catch (error) {
+        console.error("Error loading reviews:", error);
+        toast.error("Failed to load reviews");
+      } finally {
+        setIsLoading(false);
+      }
     };
     
     loadReviews();
@@ -50,13 +56,41 @@ const ReviewSection = ({ movieId }: ReviewSectionProps) => {
       return;
     }
 
-    const success = await handleSubmit(userRating, reviewText);
-    if (success) {
-      // Reload reviews after submission
-      const reviewData = await getMovieReviews(movieId);
-      setReviews(reviewData);
-      setUserRating(0);
-      setReviewText("");
+    try {
+      // Submit the review directly to avoid double submission
+      const reviewData: ReviewData = {
+        movie_id: movieId,
+        stars: userRating,
+        review_text: reviewText,
+        username: user.email || 'Anonymous',
+      };
+
+      const success = await submitReview(reviewData);
+      
+      if (success) {
+        // Add the new review to the existing reviews immediately for instant feedback
+        const newReview = {
+          id: Date.now(), // Temporary ID until we refresh
+          movie_id: movieId,
+          stars: userRating,
+          review_text: reviewText,
+          username: user.email || 'Anonymous',
+          created_at: new Date().toISOString(),
+          sentiment: 'neutral', // Default until backend processes it
+          user_id: user.id
+        };
+        
+        setReviews(prevReviews => [newReview, ...prevReviews]);
+        setUserRating(0);
+        setReviewText("");
+        
+        // Reload all reviews to get accurate data
+        const updatedReviews = await getMovieReviews(movieId);
+        setReviews(updatedReviews);
+      }
+    } catch (error) {
+      console.error("Error submitting review:", error);
+      toast.error("Failed to submit review");
     }
   };
 
@@ -147,7 +181,7 @@ const ReviewSection = ({ movieId }: ReviewSectionProps) => {
           {reviews.map((review) => (
             <ReviewCard 
               key={review.id}
-              username={review.username || "Anonymous"}
+              username={review.profiles?.username || review.username || "Anonymous"}
               date={new Date(review.created_at).toLocaleDateString()}
               rating={review.stars}
               comment={review.review_text}

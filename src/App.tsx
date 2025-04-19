@@ -9,6 +9,7 @@ import NotFound from '@/pages/NotFound';
 import About from '@/pages/About';
 import PrivacyPolicy from '@/pages/PrivacyPolicy';
 import Watchlist from '@/pages/Watchlist';
+import UserDashboard from '@/pages/UserDashboard';
 import LandingPage from '@/pages/LandingPage';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { WatchlistProvider } from '@/contexts/WatchlistContext';
@@ -67,6 +68,7 @@ const AppRoutes = () => {
       
       {/* Protected routes */}
       <Route path="/watchlist" element={<ProtectedRoute><Watchlist /></ProtectedRoute>} />
+      <Route path="/dashboard" element={<ProtectedRoute><UserDashboard /></ProtectedRoute>} />
       
       {/* Catch all */}
       <Route path="*" element={<NotFound />} />
