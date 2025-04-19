@@ -45,4 +45,18 @@ export interface Movie {
   runtime?: string;
   boxOffice?: string;
   imdbRating?: string;
+  
+  // Additional TMDB fields
+  adult?: boolean;
+  budget?: number;
+  imdbId?: string;
+  overview?: string;
+  productionCompanies?: { id: number; name: string; logo_path?: string }[];
+  releaseDate?: string;
+  revenue?: number;
+  spokenLanguages?: { english_name: string; iso_639_1: string; name: string }[];
+  voteCount?: number;
+  backdropPath?: string;
+  tagline?: string;
+  status?: string;
 }

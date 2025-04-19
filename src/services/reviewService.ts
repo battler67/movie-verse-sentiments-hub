@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface ReviewData {
   movie_id: string;
@@ -55,6 +56,25 @@ export const getMovieReviews = async (movieId: string) => {
   } catch (error) {
     console.error('Error fetching reviews:', error);
     toast.error('Failed to load reviews');
+    return [];
+  }
+};
+
+export const getUserReviews = async (userId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('reviews')
+      .select(`
+        *
+      `)
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error fetching user reviews:', error);
+    toast.error('Failed to load your reviews');
     return [];
   }
 };

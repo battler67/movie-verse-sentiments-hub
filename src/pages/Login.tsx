@@ -1,12 +1,66 @@
 
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Film, Mail, Lock, Github } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const Login = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email || !password) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (error) {
+        throw error;
+      }
+      
+      toast.success('Signed in successfully!');
+      navigate('/');
+    } catch (error: any) {
+      toast.error(error.message || 'Error signing in');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGithubSignIn = async () => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'github',
+        options: {
+          redirectTo: `${window.location.origin}/`
+        }
+      });
+      
+      if (error) {
+        throw error;
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Error signing in with GitHub');
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="flex min-h-screen flex-col justify-center">
       <div className="container relative max-w-md mx-auto p-6">
@@ -24,7 +78,7 @@ const Login = () => {
         </div>
         
         <div className="grid gap-6">
-          <form>
+          <form onSubmit={handleSignIn}>
             <div className="grid gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
@@ -35,6 +89,9 @@ const Login = () => {
                     placeholder="name@example.com"
                     type="email"
                     className="pl-10 bg-movie-dark border-white/10"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
                   />
                 </div>
               </div>
@@ -53,12 +110,19 @@ const Login = () => {
                     placeholder="••••••••"
                     type="password"
                     className="pl-10 bg-movie-dark border-white/10"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
                   />
                 </div>
               </div>
               
-              <Button className="w-full bg-movie-primary hover:bg-movie-primary/90">
-                Sign In
+              <Button 
+                type="submit" 
+                className="w-full bg-movie-primary hover:bg-movie-primary/90"
+                disabled={loading}
+              >
+                {loading ? 'Signing In...' : 'Sign In'}
               </Button>
             </div>
           </form>
@@ -74,7 +138,12 @@ const Login = () => {
             </div>
           </div>
           
-          <Button variant="outline" className="border-white/10">
+          <Button 
+            variant="outline" 
+            className="border-white/10"
+            onClick={handleGithubSignIn}
+            disabled={loading}
+          >
             <Github className="mr-2 h-4 w-4" />
             GitHub
           </Button>

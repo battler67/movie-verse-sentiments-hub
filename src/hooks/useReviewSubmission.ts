@@ -10,11 +10,11 @@ export const useReviewSubmission = (movieId: string) => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (stars: number, reviewText: string) => {
+  const handleSubmit = async (stars: number, reviewText: string): Promise<boolean> => {
     if (!user) {
       toast.error('Please log in to submit a review');
       navigate('/login');
-      return;
+      return false;
     }
 
     setIsSubmitting(true);
@@ -26,7 +26,8 @@ export const useReviewSubmission = (movieId: string) => {
         username: user.email || 'Anonymous',
       };
 
-      await submitReview(reviewData);
+      const success = await submitReview(reviewData);
+      return success;
     } finally {
       setIsSubmitting(false);
     }
