@@ -165,10 +165,19 @@ export const likeReview = async (reviewId: number) => {
       throw new Error('User not authenticated');
     }
 
-    // Fixed: Using update with direct increment instead of rpc
+    // First, get the current like count
+    const { data: reviewData, error: fetchError } = await supabase
+      .from('reviews')
+      .select('user_likes')
+      .eq('id', reviewId)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    // Then increment it
     const { error } = await supabase
       .from('reviews')
-      .update({ user_likes: supabase.rpc('get_sentiment', { review_text: '' }) + 1 })
+      .update({ user_likes: (reviewData.user_likes || 0) + 1 })
       .eq('id', reviewId);
 
     if (error) throw error;
@@ -189,10 +198,19 @@ export const dislikeReview = async (reviewId: number) => {
       throw new Error('User not authenticated');
     }
 
-    // Fixed: Using update with direct increment instead of rpc
+    // First, get the current dislike count
+    const { data: reviewData, error: fetchError } = await supabase
+      .from('reviews')
+      .select('user_dislikes')
+      .eq('id', reviewId)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    // Then increment it
     const { error } = await supabase
       .from('reviews')
-      .update({ user_dislikes: supabase.rpc('get_sentiment', { review_text: '' }) + 1 })
+      .update({ user_dislikes: (reviewData.user_dislikes || 0) + 1 })
       .eq('id', reviewId);
 
     if (error) throw error;
