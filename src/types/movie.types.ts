@@ -59,4 +59,16 @@ export interface Movie {
   backdropPath?: string;
   tagline?: string;
   status?: string;
+  videos?: TmdbVideo[];
+}
+
+export interface TmdbVideo {
+  id: string;
+  key: string;
+  name: string;
+  site: string;
+  size: number;
+  type: string;
+  official: boolean;
+  published_at: string;
 }
