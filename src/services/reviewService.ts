@@ -46,7 +46,7 @@ export const getMovieReviews = async (movieId: string) => {
       .from('reviews')
       .select(`
         *,
-        profiles:user_id (username, avatar_url)
+        profiles:user_id(username, avatar_url)
       `)
       .eq('movie_id', movieId)
       .order('created_at', { ascending: false });
@@ -62,12 +62,11 @@ export const getMovieReviews = async (movieId: string) => {
 
 export const getUserReviews = async (userId: string) => {
   try {
+    // Modified this query to not use the foreign key relationship
+    // and instead just select all columns from reviews
     const { data, error } = await supabase
       .from('reviews')
-      .select(`
-        *,
-        profiles:user_id (username, avatar_url)
-      `)
+      .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
 

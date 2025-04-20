@@ -18,7 +18,7 @@ export const UserReviews = ({ reviews }: UserReviewsProps) => {
           {reviews.map((review) => (
             <ReviewCard 
               key={review.id}
-              username={review.profiles?.username || review.username || "Anonymous"}
+              username={review.username || "Anonymous"}
               date={new Date(review.created_at).toLocaleDateString()}
               rating={review.stars}
               comment={review.review_text}
