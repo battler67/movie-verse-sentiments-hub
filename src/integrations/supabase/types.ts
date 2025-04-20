@@ -36,6 +36,39 @@ export type Database = {
         }
         Relationships: []
       }
+      "previous user reviews of a particular movie": {
+        Row: {
+          created_at: string
+          "movie id": number
+          review: string | null
+          "user id": string | null
+          user_dislikes: number | null
+          user_likes: number | null
+          user_sentiment: string | null
+          user_stars: number | null
+        }
+        Insert: {
+          created_at?: string
+          "movie id"?: number
+          review?: string | null
+          "user id"?: string | null
+          user_dislikes?: number | null
+          user_likes?: number | null
+          user_sentiment?: string | null
+          user_stars?: number | null
+        }
+        Update: {
+          created_at?: string
+          "movie id"?: number
+          review?: string | null
+          "user id"?: string | null
+          user_dislikes?: number | null
+          user_likes?: number | null
+          user_sentiment?: string | null
+          user_stars?: number | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -68,7 +101,9 @@ export type Database = {
           review_text: string | null
           sentiment: string | null
           stars: number | null
+          user_dislikes: number
           user_id: string | null
+          user_likes: number
           username: string | null
         }
         Insert: {
@@ -78,7 +113,9 @@ export type Database = {
           review_text?: string | null
           sentiment?: string | null
           stars?: number | null
+          user_dislikes?: number
           user_id?: string | null
+          user_likes?: number
           username?: string | null
         }
         Update: {
@@ -88,7 +125,9 @@ export type Database = {
           review_text?: string | null
           sentiment?: string | null
           stars?: number | null
+          user_dislikes?: number
           user_id?: string | null
+          user_likes?: number
           username?: string | null
         }
         Relationships: []

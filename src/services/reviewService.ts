@@ -27,9 +27,28 @@ export const submitReview = async (reviewData: ReviewData) => {
         review_text: reviewData.review_text,
         username: reviewData.username,
         user_id: user.id,
+        user_likes: 0,
+        user_dislikes: 0
       });
 
     if (error) throw error;
+
+    // Also insert into the "previous user reviews of a particular movie" table
+    const { error: previousError } = await supabase
+      .from('previous user reviews of a particular movie')
+      .insert({
+        'movie id': parseInt(reviewData.movie_id),
+        'user id': user.id,
+        review: reviewData.review_text,
+        user_stars: reviewData.stars,
+        user_sentiment: 'neutral', // Default until processed
+        user_likes: 0,
+        user_dislikes: 0
+      });
+
+    if (previousError) {
+      console.error('Error inserting into previous reviews:', previousError);
+    }
 
     toast.success('Review submitted successfully!');
     return true;
@@ -42,17 +61,46 @@ export const submitReview = async (reviewData: ReviewData) => {
 
 export const getMovieReviews = async (movieId: string) => {
   try {
-    const { data, error } = await supabase
+    // First get reviews from the main reviews table
+    const { data: mainReviews, error: mainError } = await supabase
       .from('reviews')
-      .select(`
-        *,
-        profiles:user_id(username, avatar_url)
-      `)
+      .select('*')
       .eq('movie_id', movieId)
       .order('created_at', { ascending: false });
 
-    if (error) throw error;
-    return data;
+    if (mainError) throw mainError;
+
+    // Then get reviews from the "previous user reviews" table
+    const { data: previousReviews, error: previousError } = await supabase
+      .from('previous user reviews of a particular movie')
+      .select('*')
+      .eq('movie id', parseInt(movieId))
+      .order('created_at', { ascending: false });
+
+    if (previousError) throw previousError;
+
+    // Convert previous reviews to match the format of main reviews
+    const formattedPreviousReviews = previousReviews.map(prev => ({
+      id: prev.created_at + prev['user id'], // Create a unique ID
+      movie_id: prev['movie id'].toString(),
+      stars: prev.user_stars,
+      review_text: prev.review,
+      sentiment: prev.user_sentiment,
+      username: prev['user id'],
+      created_at: prev.created_at,
+      user_id: prev['user id'],
+      user_likes: prev.user_likes || 0,
+      user_dislikes: prev.user_dislikes || 0
+    }));
+
+    // Combine both sets of reviews
+    const allReviews = [...mainReviews, ...formattedPreviousReviews];
+    
+    // Sort by creation date, newest first
+    allReviews.sort((a, b) => 
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+    return allReviews;
   } catch (error) {
     console.error('Error fetching reviews:', error);
     toast.error('Failed to load reviews');
@@ -62,16 +110,46 @@ export const getMovieReviews = async (movieId: string) => {
 
 export const getUserReviews = async (userId: string) => {
   try {
-    // Modified this query to not use the foreign key relationship
-    // and instead just select all columns from reviews
-    const { data, error } = await supabase
+    // Get reviews from main reviews table
+    const { data: mainReviews, error: mainError } = await supabase
       .from('reviews')
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
 
-    if (error) throw error;
-    return data;
+    if (mainError) throw mainError;
+
+    // Get reviews from previous reviews table
+    const { data: previousReviews, error: previousError } = await supabase
+      .from('previous user reviews of a particular movie')
+      .select('*')
+      .eq('user id', userId)
+      .order('created_at', { ascending: false });
+
+    if (previousError) throw previousError;
+
+    // Convert previous reviews to match the format of main reviews
+    const formattedPreviousReviews = previousReviews.map(prev => ({
+      id: prev.created_at + prev['user id'], // Create a unique ID
+      movie_id: prev['movie id'].toString(),
+      stars: prev.user_stars,
+      review_text: prev.review,
+      sentiment: prev.user_sentiment,
+      username: prev['user id'],
+      created_at: prev.created_at,
+      user_id: prev['user id'],
+      user_likes: prev.user_likes || 0,
+      user_dislikes: prev.user_dislikes || 0
+    }));
+
+    // Combine both sets of reviews
+    const allReviews = [...mainReviews, ...formattedPreviousReviews];
+    
+    // Sort by creation date, newest first
+    allReviews.sort((a, b) => 
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+    return allReviews;
   } catch (error) {
     console.error('Error fetching user reviews:', error);
     toast.error('Failed to load your reviews');
@@ -79,15 +157,77 @@ export const getUserReviews = async (userId: string) => {
   }
 };
 
+export const likeReview = async (reviewId: number) => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    const { error } = await supabase
+      .from('reviews')
+      .update({ user_likes: supabase.rpc('increment', { value: 1 }) })
+      .eq('id', reviewId);
+
+    if (error) throw error;
+    
+    return true;
+  } catch (error) {
+    console.error('Error liking review:', error);
+    toast.error('Failed to like review');
+    return false;
+  }
+};
+
+export const dislikeReview = async (reviewId: number) => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    const { error } = await supabase
+      .from('reviews')
+      .update({ user_dislikes: supabase.rpc('increment', { value: 1 }) })
+      .eq('id', reviewId);
+
+    if (error) throw error;
+    
+    return true;
+  } catch (error) {
+    console.error('Error disliking review:', error);
+    toast.error('Failed to dislike review');
+    return false;
+  }
+};
+
 export const getUserReviewStats = async (userId: string) => {
   try {
-    // Get all reviews for the user
-    const { data: reviews, error } = await supabase
+    // Get reviews from both tables
+    const { data: mainReviews, error: mainError } = await supabase
       .from('reviews')
       .select('*')
       .eq('user_id', userId);
 
-    if (error) throw error;
+    if (mainError) throw mainError;
+
+    const { data: previousReviews, error: previousError } = await supabase
+      .from('previous user reviews of a particular movie')
+      .select('*')
+      .eq('user id', userId);
+
+    if (previousError) throw previousError;
+
+    // Combine the reviews
+    const reviews = [
+      ...mainReviews,
+      ...previousReviews.map(prev => ({
+        stars: prev.user_stars,
+        created_at: prev.created_at
+      }))
+    ];
 
     if (!reviews || reviews.length === 0) {
       return {
@@ -102,7 +242,10 @@ export const getUserReviewStats = async (userId: string) => {
     const totalReviews = reviews.length;
 
     // Calculate average rating
-    const totalStars = reviews.reduce((sum, review) => sum + (review.stars || 0), 0);
+    const totalStars = reviews.reduce((sum, review) => {
+      const stars = review.stars || review.user_stars || 0;
+      return sum + stars;
+    }, 0);
     const averageRating = totalReviews > 0 ? totalStars / totalReviews : 0;
 
     // Group reviews by month
@@ -126,8 +269,9 @@ export const getUserReviewStats = async (userId: string) => {
     // Calculate rating distribution (how many 1-star, 2-star, etc.)
     const ratingDistribution = Array(5).fill(0);
     reviews.forEach(review => {
-      if (review.stars && review.stars > 0 && review.stars <= 5) {
-        ratingDistribution[review.stars - 1]++;
+      const stars = review.stars || review.user_stars;
+      if (stars && stars > 0 && stars <= 5) {
+        ratingDistribution[Math.floor(stars) - 1]++;
       }
     });
 

@@ -1,7 +1,7 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, Film, Info, Bookmark, User, LogOut } from 'lucide-react';
+import { Search, Film, Info, Bookmark, User, LogOut, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useWatchlist } from '@/contexts/WatchlistContext';
@@ -34,6 +34,9 @@ const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Movie[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -51,26 +54,69 @@ const Navbar = () => {
     const searchDebounce = setTimeout(async () => {
       if (searchQuery.trim().length > 1) {
         setIsSearching(true);
-        const results = await searchMovies(searchQuery);
-        setSearchResults(results);
-        setIsSearching(false);
+        try {
+          const results = await searchMovies(searchQuery);
+          setSearchResults(results);
+          setShowDropdown(results.length > 0);
+        } catch (error) {
+          console.error("Search error:", error);
+        } finally {
+          setIsSearching(false);
+        }
       } else {
         setSearchResults([]);
+        setShowDropdown(false);
       }
     }, 300);
 
     return () => clearTimeout(searchDebounce);
   }, [searchQuery]);
 
+  useEffect(() => {
+    // Handle clicks outside the dropdown
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current && 
+        !dropdownRef.current.contains(event.target as Node) &&
+        searchInputRef.current && 
+        !searchInputRef.current.contains(event.target as Node)
+      ) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const handleSearchSelect = (movieId: string) => {
     setSearchOpen(false);
     setSearchQuery('');
+    setShowDropdown(false);
     navigate(`/movie/${movieId}`);
   };
 
   const handleSignOut = async () => {
     await signOut();
     navigate('/');
+  };
+
+  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    if (value.length > 1) {
+      setShowDropdown(true);
+    } else {
+      setShowDropdown(false);
+    }
+  };
+
+  const clearSearch = () => {
+    setSearchQuery('');
+    setShowDropdown(false);
+    if (searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
   };
 
   return (
@@ -89,18 +135,64 @@ const Navbar = () => {
             </Link>
           </div>
           
-          <div className="hidden md:flex flex-1 items-center justify-center px-6">
-            <Button
-              variant="outline"
-              className="relative w-full max-w-lg justify-start text-sm text-muted-foreground border-white/10 bg-movie-dark"
-              onClick={() => setSearchOpen(true)}
-            >
-              <Search className="mr-2 h-4 w-4" />
-              <span>Search movies...</span>
-              <kbd className="ml-auto pointer-events-none hidden h-5 select-none items-center gap-1 rounded border border-white/10 bg-black px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
-                <span className="text-xs">⌘</span>K
-              </kbd>
-            </Button>
+          <div className="hidden md:flex flex-1 items-center justify-center px-6 relative">
+            <div className="relative w-full max-w-lg">
+              <Input
+                ref={searchInputRef}
+                className="w-full pl-10 pr-10 bg-movie-dark border-white/10"
+                placeholder="Search movies..."
+                value={searchQuery}
+                onChange={handleSearchInputChange}
+              />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/60" />
+              {searchQuery && (
+                <button 
+                  className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-white/60 hover:text-white"
+                  onClick={clearSearch}
+                >
+                  <X size={16} />
+                </button>
+              )}
+              
+              {showDropdown && (
+                <div 
+                  ref={dropdownRef} 
+                  className="absolute top-full left-0 w-full mt-1 bg-movie-dark border border-white/10 rounded-md shadow-lg z-50 max-h-[300px] overflow-y-auto"
+                >
+                  {isSearching ? (
+                    <div className="p-4 text-center text-white/60">Searching...</div>
+                  ) : searchResults.length === 0 ? (
+                    <div className="p-4 text-center text-white/60">No results found</div>
+                  ) : (
+                    <div className="py-2">
+                      {searchResults.map((movie) => (
+                        <div 
+                          key={movie.id}
+                          className="flex items-center p-2 hover:bg-white/5 cursor-pointer"
+                          onClick={() => handleSearchSelect(movie.id)}
+                        >
+                          {movie.posterPath && movie.posterPath !== 'https://placeholder.svg' ? (
+                            <img 
+                              src={movie.posterPath} 
+                              alt={movie.title} 
+                              className="w-10 h-15 object-cover rounded mr-3"
+                            />
+                          ) : (
+                            <div className="w-10 h-15 bg-white/10 rounded mr-3 flex items-center justify-center">
+                              <Film size={20} className="text-white/40" />
+                            </div>
+                          )}
+                          <div>
+                            <div className="font-medium text-white">{movie.title}</div>
+                            <div className="text-xs text-white/60">{movie.year}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
             
             <CommandDialog open={searchOpen} onOpenChange={setSearchOpen}>
               <CommandInput 
@@ -187,6 +279,10 @@ const Navbar = () => {
                       <User className="mr-2 h-4 w-4" />
                       <span>Profile</span>
                     </DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer" onClick={() => navigate('/dashboard')}>
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Dashboard</span>
+                    </DropdownMenuItem>
                     <DropdownMenuItem className="cursor-pointer" onClick={() => navigate('/watchlist')}>
                       <Bookmark className="mr-2 h-4 w-4" />
                       <span>Watchlist</span>
@@ -209,15 +305,62 @@ const Navbar = () => {
           </div>
         </div>
         
-        <div className="md:hidden py-2">
-          <Button
-            variant="outline"
-            className="relative w-full justify-start text-sm text-muted-foreground border-white/10 bg-movie-dark"
-            onClick={() => setSearchOpen(true)}
-          >
-            <Search className="mr-2 h-4 w-4" />
-            <span>Search movies...</span>
-          </Button>
+        <div className="md:hidden py-2 relative">
+          <div className="relative">
+            <Input
+              className="w-full pl-10 pr-10 bg-movie-dark border-white/10"
+              placeholder="Search movies..."
+              value={searchQuery}
+              onChange={handleSearchInputChange}
+            />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/60" />
+            {searchQuery && (
+              <button 
+                className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-white/60 hover:text-white"
+                onClick={clearSearch}
+              >
+                <X size={16} />
+              </button>
+            )}
+            
+            {showDropdown && (
+              <div 
+                className="absolute top-full left-0 w-full mt-1 bg-movie-dark border border-white/10 rounded-md shadow-lg z-50 max-h-[300px] overflow-y-auto"
+              >
+                {isSearching ? (
+                  <div className="p-4 text-center text-white/60">Searching...</div>
+                ) : searchResults.length === 0 ? (
+                  <div className="p-4 text-center text-white/60">No results found</div>
+                ) : (
+                  <div className="py-2">
+                    {searchResults.map((movie) => (
+                      <div 
+                        key={movie.id}
+                        className="flex items-center p-2 hover:bg-white/5 cursor-pointer"
+                        onClick={() => handleSearchSelect(movie.id)}
+                      >
+                        {movie.posterPath && movie.posterPath !== 'https://placeholder.svg' ? (
+                          <img 
+                            src={movie.posterPath} 
+                            alt={movie.title} 
+                            className="w-10 h-15 object-cover rounded mr-3"
+                          />
+                        ) : (
+                          <div className="w-10 h-15 bg-white/10 rounded mr-3 flex items-center justify-center">
+                            <Film size={20} className="text-white/40" />
+                          </div>
+                        )}
+                        <div>
+                          <div className="font-medium text-white">{movie.title}</div>
+                          <div className="text-xs text-white/60">{movie.year}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </nav>

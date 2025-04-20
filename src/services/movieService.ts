@@ -1,3 +1,4 @@
+
 import { toast } from "sonner";
 import { TMDB_API_URL, TMDB_API_READ_TOKEN } from '@/constants/movieData';
 import { Movie } from '@/types/movie.types';
@@ -10,6 +11,7 @@ export const fetchMovieById = async (id: string): Promise<Movie | null> => {
   }
 
   try {
+    console.log(`Fetching movie details for ID: ${id}`);
     const response = await fetch(`${TMDB_API_URL}/movie/${id}?append_to_response=credits,videos`, {
       headers: {
         'Authorization': `Bearer ${TMDB_API_READ_TOKEN}`,
@@ -18,10 +20,12 @@ export const fetchMovieById = async (id: string): Promise<Movie | null> => {
     });
 
     if (!response.ok) {
+      console.error(`TMDB API error: ${response.status} - ${response.statusText}`);
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
     const data = await response.json();
+    console.log(`Successfully fetched movie data for ${data.title}`);
     
     if (data.id) {
       const director = data.credits?.crew?.find((person: any) => person.job === 'Director')?.name || '';
@@ -86,6 +90,7 @@ export const searchMovies = async (query: string): Promise<Movie[]> => {
   if (!query) return [];
   
   try {
+    console.log(`Searching movies with query: "${query}"`);
     const response = await fetch(
       `${TMDB_API_URL}/search/movie?query=${encodeURIComponent(query)}&include_adult=false`, 
       {
@@ -97,10 +102,12 @@ export const searchMovies = async (query: string): Promise<Movie[]> => {
     );
 
     if (!response.ok) {
+      console.error(`TMDB Search API error: ${response.status} - ${response.statusText}`);
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
     const data = await response.json();
+    console.log(`Search results: ${data.results ? data.results.length : 0} movies found`);
     
     if (data.results) {
       return data.results.slice(0, 10).map((result: any) => ({
@@ -133,13 +140,21 @@ export const searchMovies = async (query: string): Promise<Movie[]> => {
 
 export const searchMoviesByGenre = async (genreId: string): Promise<Movie[]> => {
   try {
+    console.log(`Searching movies by genre ID: ${genreId}`);
     const response = await fetch(`${TMDB_API_URL}/discover/movie?with_genres=${genreId}`, {
       headers: {
         'Authorization': `Bearer ${TMDB_API_READ_TOKEN}`,
         'Content-Type': 'application/json'
       }
     });
+    
+    if (!response.ok) {
+      console.error(`TMDB Genre API error: ${response.status} - ${response.statusText}`);
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
     const data = await response.json();
+    console.log(`Genre search results: ${data.results ? data.results.length : 0} movies found`);
     
     if (data.results) {
       const movies = data.results.slice(0, 10).map((result: any) => ({

@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Star } from 'lucide-react';
+import { Star, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,7 +9,7 @@ import ReviewCard from './ReviewCard';
 import SentimentTag from './SentimentTag';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
-import { getMovieReviews, submitReview, ReviewData } from '@/services/reviewService';
+import { getMovieReviews, submitReview, likeReview, dislikeReview, ReviewData } from '@/services/reviewService';
 
 interface ReviewSectionProps {
   movieId: string;
@@ -28,6 +28,7 @@ const ReviewSection = ({ movieId }: ReviewSectionProps) => {
       setIsLoading(true);
       try {
         const reviewData = await getMovieReviews(movieId);
+        console.log("Loaded reviews:", reviewData);
         setReviews(reviewData);
       } catch (error) {
         console.error("Error loading reviews:", error);
@@ -77,7 +78,9 @@ const ReviewSection = ({ movieId }: ReviewSectionProps) => {
           username: user.email || 'Anonymous',
           created_at: new Date().toISOString(),
           sentiment: 'neutral', // Default until backend processes it
-          user_id: user.id
+          user_id: user.id,
+          user_likes: 0,
+          user_dislikes: 0
         };
         
         setReviews(prevReviews => [newReview, ...prevReviews]);
@@ -91,6 +94,50 @@ const ReviewSection = ({ movieId }: ReviewSectionProps) => {
     } catch (error) {
       console.error("Error submitting review:", error);
       toast.error("Failed to submit review");
+    }
+  };
+
+  const handleLikeReview = async (reviewId: number) => {
+    if (!user) {
+      toast.error("Please log in to like a review");
+      return;
+    }
+    
+    try {
+      await likeReview(reviewId);
+      // Update the review in the local state
+      setReviews(prevReviews => 
+        prevReviews.map(review => 
+          review.id === reviewId 
+            ? { ...review, user_likes: (review.user_likes || 0) + 1 } 
+            : review
+        )
+      );
+    } catch (error) {
+      console.error("Error liking review:", error);
+      toast.error("Failed to like review");
+    }
+  };
+
+  const handleDislikeReview = async (reviewId: number) => {
+    if (!user) {
+      toast.error("Please log in to dislike a review");
+      return;
+    }
+    
+    try {
+      await dislikeReview(reviewId);
+      // Update the review in the local state
+      setReviews(prevReviews => 
+        prevReviews.map(review => 
+          review.id === reviewId 
+            ? { ...review, user_dislikes: (review.user_dislikes || 0) + 1 } 
+            : review
+        )
+      );
+    } catch (error) {
+      console.error("Error disliking review:", error);
+      toast.error("Failed to dislike review");
     }
   };
 
@@ -179,14 +226,33 @@ const ReviewSection = ({ movieId }: ReviewSectionProps) => {
       ) : (
         <div className="space-y-4">
           {reviews.map((review) => (
-            <ReviewCard 
-              key={review.id}
-              username={review.profiles?.username || review.username || "Anonymous"}
-              date={new Date(review.created_at).toLocaleDateString()}
-              rating={review.stars}
-              comment={review.review_text}
-              sentiment={review.sentiment || "neutral"}
-            />
+            <div key={review.id} className="border border-white/5 rounded-lg bg-movie-dark p-4 md:p-6">
+              <div className="flex items-start justify-between">
+                <ReviewCard 
+                  username={review.username || "Anonymous"}
+                  date={new Date(review.created_at).toLocaleDateString()}
+                  rating={review.stars}
+                  comment={review.review_text}
+                  sentiment={review.sentiment || "neutral"}
+                />
+              </div>
+              <div className="mt-4 flex items-center space-x-4">
+                <button 
+                  className="flex items-center space-x-1 text-white/60 hover:text-white"
+                  onClick={() => handleLikeReview(review.id)}
+                >
+                  <ThumbsUp size={16} />
+                  <span>{review.user_likes || 0}</span>
+                </button>
+                <button 
+                  className="flex items-center space-x-1 text-white/60 hover:text-white"
+                  onClick={() => handleDislikeReview(review.id)}
+                >
+                  <ThumbsDown size={16} />
+                  <span>{review.user_dislikes || 0}</span>
+                </button>
+              </div>
+            </div>
           ))}
         </div>
       )}
