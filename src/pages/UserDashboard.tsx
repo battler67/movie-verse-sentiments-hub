@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { getUserReviews, getUserReviewStats } from '@/services/reviewService';
+import { getUserReviews } from '@/services/review/getReviews';
+import { getUserReviewStats } from '@/services/review/reviewStats';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';

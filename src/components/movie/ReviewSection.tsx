@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Star, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,7 +8,10 @@ import ReviewCard from './ReviewCard';
 import SentimentTag from './SentimentTag';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
-import { getMovieReviews, submitReview, likeReview, dislikeReview, ReviewData } from '@/services/reviewService';
+import { getMovieReviews } from '@/services/review/getReviews';
+import { submitReview } from '@/services/review/submitReview';
+import { likeReview, dislikeReview } from '@/services/review/reviewInteractions';
+import { ReviewData } from '@/services/review/submitReview';
 
 interface ReviewSectionProps {
   movieId: string;
@@ -58,7 +60,6 @@ const ReviewSection = ({ movieId }: ReviewSectionProps) => {
     }
 
     try {
-      // Submit the review directly to avoid double submission
       const reviewData: ReviewData = {
         movie_id: movieId,
         stars: userRating,
@@ -69,15 +70,14 @@ const ReviewSection = ({ movieId }: ReviewSectionProps) => {
       const success = await submitReview(reviewData);
       
       if (success) {
-        // Add the new review to the existing reviews immediately for instant feedback
         const newReview = {
-          id: Date.now(), // Temporary ID until we refresh
+          id: Date.now(),
           movie_id: movieId,
           stars: userRating,
           review_text: reviewText,
           username: user.email || 'Anonymous',
           created_at: new Date().toISOString(),
-          sentiment: 'neutral', // Default until backend processes it
+          sentiment: 'neutral',
           user_id: user.id,
           user_likes: 0,
           user_dislikes: 0
@@ -87,7 +87,6 @@ const ReviewSection = ({ movieId }: ReviewSectionProps) => {
         setUserRating(0);
         setReviewText("");
         
-        // Reload all reviews to get accurate data
         const updatedReviews = await getMovieReviews(movieId);
         setReviews(updatedReviews);
       }
@@ -105,7 +104,6 @@ const ReviewSection = ({ movieId }: ReviewSectionProps) => {
     
     try {
       await likeReview(reviewId);
-      // Update the review in the local state
       setReviews(prevReviews => 
         prevReviews.map(review => 
           review.id === reviewId 
@@ -127,7 +125,6 @@ const ReviewSection = ({ movieId }: ReviewSectionProps) => {
     
     try {
       await dislikeReview(reviewId);
-      // Update the review in the local state
       setReviews(prevReviews => 
         prevReviews.map(review => 
           review.id === reviewId 

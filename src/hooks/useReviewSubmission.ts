@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { submitReview, ReviewData } from '@/services/reviewService';
+import { submitReview, ReviewData } from '@/services/review/submitReview';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 
