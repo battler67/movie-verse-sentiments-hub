@@ -6,6 +6,7 @@ import { getUserReviews, getUserReviewStats } from '@/services/reviewService';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
 import { DashboardStats } from '@/components/dashboard/DashboardStats';
 import { DashboardCharts } from '@/components/dashboard/DashboardCharts';
 import { UserReviews } from '@/components/dashboard/UserReviews';
