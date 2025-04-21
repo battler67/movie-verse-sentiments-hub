@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import Navbar from '@/components/layout/Navbar';
@@ -19,7 +19,10 @@ const Profile = () => {
     email: "",
     user_prefernces: ""
   });
+  const [profileSaved, setProfileSaved] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const profileBoxRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (user) {
@@ -28,7 +31,7 @@ const Profile = () => {
         const { data, error } = await supabase
           .from("user profile details")
           .select("*")
-          .eq("user_id", parseInt(user.id))
+          .eq("user_id", user.id)
           .maybeSingle();
         
         if (error) {
@@ -52,6 +55,12 @@ const Profile = () => {
     }
   }, [user]);
 
+  useEffect(() => {
+    if (profileSaved && profileBoxRef.current) {
+      profileBoxRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [profileSaved]);
+
   if (!user) {
     return (
       <div>
@@ -61,27 +70,28 @@ const Profile = () => {
         </div>
         <Footer />
       </div>
-    )
+    );
   }
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setForm(f => ({
       ...f,
       [e.target.name]: e.target.value
-    }))
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setProfileSaved(false);
     try {
-      // upsert (insert or update) profile
+      // upsert (insert or update) profile, ensure all types match Supabase requirements
       const { error } = await supabase
         .from("user profile details")
         .upsert({
-          user_id: parseInt(user.id),
+          user_id: user.id,
           username: form.username,
-          user_age: form.user_age ? parseInt(form.user_age) : null,
+          user_age: form.user_age ? Number(form.user_age) : null,
           user_gender: form.user_gender,
           user_description: form.user_description,
           email: form.email,
@@ -93,6 +103,7 @@ const Profile = () => {
         toast.error("Failed to save profile");
       } else {
         toast.success("Profile saved successfully");
+        setProfileSaved(true);
       }
     } catch (error) {
       console.error("Error submitting form:", error);
@@ -100,13 +111,45 @@ const Profile = () => {
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
       <main className="flex-1 container mx-auto px-4 pt-8 pb-24">
         <h1 className="text-3xl font-bold mb-8">My Profile</h1>
+        {/* Profile saved box */}
+        {profileSaved && (
+          <div
+            ref={profileBoxRef}
+            className="max-w-xl mx-auto mb-8 bg-movie-dark border border-movie-primary rounded-lg shadow p-6"
+          >
+            <h2 className="text-2xl font-semibold mb-4">Your Profile Details</h2>
+            <div className="space-y-2">
+              <div>
+                <span className="font-semibold text-movie-primary">Username: </span>
+                <span>{form.username}</span>
+              </div>
+              <div>
+                <span className="font-semibold text-movie-primary">Email: </span>
+                <span>{form.email}</span>
+              </div>
+              <div>
+                <span className="font-semibold text-movie-primary">Age: </span>
+                <span>{form.user_age}</span>
+              </div>
+              <div>
+                <span className="font-semibold text-movie-primary">Gender: </span>
+                <span>{form.user_gender}</span>
+              </div>
+              <div>
+                <span className="font-semibold text-movie-primary">Description: </span>
+                <span>{form.user_description}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         <form className="max-w-xl mx-auto bg-movie-dark rounded-lg shadow p-6 space-y-6" onSubmit={handleSubmit}>
           <div>
             <label className="block font-semibold mb-1">Username</label>
@@ -168,10 +211,11 @@ const Profile = () => {
             <input 
               type="email"
               name="email"
-              readOnly
-              className="w-full px-3 py-2 rounded border border-white/10 bg-movie-darker text-white opacity-70"
+              className="w-full px-3 py-2 rounded border border-white/10 bg-movie-darker text-white"
               value={form.email}
-              disabled
+              onChange={onChange}
+              required
+              disabled={loading}
             />
           </div>
 

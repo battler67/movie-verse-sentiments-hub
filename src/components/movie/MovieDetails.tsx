@@ -1,4 +1,3 @@
-
 import { Award, DollarSign, Calendar, Clock, Globe, ThumbsUp, TrendingUp, Coins, Info, Tag } from 'lucide-react';
 import { Movie } from '@/types/movie.types';
 import { formatCurrency } from '@/utils/formatters';
@@ -132,14 +131,7 @@ const MovieDetails = ({ movie }: MovieDetailsProps) => {
           <h3 className="text-sm font-medium text-white/60 mb-2">IMDb</h3>
           <div className="flex items-center">
             <Info size={16} className="text-white/60 mr-2" />
-            <a 
-              href={`https://www.imdb.com/title/${movie.imdbId}`} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-movie-primary hover:underline"
-            >
-              View on IMDb
-            </a>
+            <span className="text-white/80">IMDb ID: {movie.imdbId}</span>
           </div>
         </div>
       )}

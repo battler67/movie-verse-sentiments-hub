@@ -19,7 +19,13 @@ export const fetchRecentMovies = async (limit = 5): Promise<Movie[]> => {
     const data = await response.json();
     
     if (data.results && Array.isArray(data.results)) {
-      return data.results.slice(0, limit).map((movie: any) => ({
+      // Sort by release date descending to get most recent movies
+      const sorted = data.results.sort((a: any, b: any) => {
+        if (!a.release_date) return 1;
+        if (!b.release_date) return -1;
+        return new Date(b.release_date).getTime() - new Date(a.release_date).getTime();
+      });
+      return sorted.slice(0, limit).map((movie: any) => ({
         id: movie.id.toString(),
         title: movie.title,
         year: movie.release_date ? movie.release_date.split('-')[0] : '',

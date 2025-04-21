@@ -76,6 +76,18 @@ const UserDashboard = () => {
     );
   }
 
+  // To handle focus after navigation to Profile from DashboardStats
+  useEffect(() => {
+    const handleHashChange = () => {
+      if (window.location.pathname === '/profile' && window.location.hash === '#user-profile-box') {
+        const el = document.getElementById('user-profile-box');
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      }
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />

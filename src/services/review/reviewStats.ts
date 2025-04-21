@@ -36,6 +36,7 @@ export const getUserReviewStats = async (userId: string) => {
         totalReviews: 0,
         averageRating: 0,
         reviewsByMonth: [],
+        reviewsByDay: [],
         ratingDistribution: Array(5).fill(0)
       };
     }
@@ -54,19 +55,33 @@ export const getUserReviewStats = async (userId: string) => {
     const reviewsByMonth: { month: string; count: number }[] = [];
     const monthsMap = new Map<string, number>();
 
+    // Group reviews by day
+    const reviewsByDay: { day: string; count: number }[] = [];
+    const daysMap = new Map<string, number>();
+
     reviews.forEach(review => {
+      // By month
       const date = new Date(review.created_at);
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      const count = monthsMap.get(monthKey) || 0;
-      monthsMap.set(monthKey, count + 1);
+      const currentMonthCount = monthsMap.get(monthKey) || 0;
+      monthsMap.set(monthKey, currentMonthCount + 1);
+      // By day
+      const dayKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      const currentDayCount = daysMap.get(dayKey) || 0;
+      daysMap.set(dayKey, currentDayCount + 1);
     });
 
     Array.from(monthsMap.entries()).forEach(([month, count]) => {
       reviewsByMonth.push({ month, count });
     });
 
-    // Sort reviewsByMonth by date
+    Array.from(daysMap.entries()).forEach(([day, count]) => {
+      reviewsByDay.push({ day, count });
+    });
+
+    // Sort
     reviewsByMonth.sort((a, b) => a.month.localeCompare(b.month));
+    reviewsByDay.sort((a, b) => a.day.localeCompare(b.day));
 
     // Calculate rating distribution
     const ratingDistribution = Array(5).fill(0);
@@ -81,6 +96,7 @@ export const getUserReviewStats = async (userId: string) => {
       totalReviews,
       averageRating,
       reviewsByMonth,
+      reviewsByDay,
       ratingDistribution
     };
   } catch (error) {

@@ -24,15 +24,20 @@ export const DashboardCharts = ({ stats }: DashboardChartsProps) => {
   const getReviewsOverTimeData = () => {
     if (!stats?.reviewsByMonth || stats.reviewsByMonth.length === 0) return [];
     
-    return stats.reviewsByMonth.map((item: any) => {
-      const [year, month] = item.month.split('-');
-      const date = new Date(parseInt(year), parseInt(month) - 1);
-      const monthName = date.toLocaleString('default', { month: 'short' });
-      return {
-        name: `${monthName} ${year}`,
-        reviews: item.count
-      };
-    });
+    // Convert to days instead of months
+    // Flatten any grouped reviewsByMonth if necessary
+    return stats.reviewsByDay && stats.reviewsByDay.length > 0
+      ? stats.reviewsByDay.map((item: any) => ({
+          name: item.day, // e.g. "2025-04-21"
+          reviews: item.count
+        }))
+      : stats.reviewsByMonth.map((item: any) => {
+        // Fallback if reviewsByDay missing
+        return {
+          name: item.month,
+          reviews: item.count
+        }
+      });
   };
 
   return (
@@ -79,12 +84,12 @@ export const DashboardCharts = ({ stats }: DashboardChartsProps) => {
       <Card className="bg-movie-dark/70 border-white/10">
         <CardContent className="p-6">
           <h3 className="text-xl font-medium mb-4">Reviews Over Time</h3>
-          {stats?.reviewsByMonth?.length > 0 ? (
+          {stats?.reviewsByDay?.length > 0 || stats?.reviewsByMonth?.length > 0 ? (
             <ChartContainer config={{
               reviews: { color: '#8884d8' }
             }}>
               <BarChart data={getReviewsOverTimeData()}>
-                <XAxis dataKey="name" />
+                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
                 <YAxis />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <Legend />
