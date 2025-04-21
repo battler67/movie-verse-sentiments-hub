@@ -10,6 +10,19 @@ export const likeReview = async (reviewId: number) => {
       throw new Error('User not authenticated');
     }
 
+    // Check if the user has already liked this review
+    const { data: existingInteractions, error: checkError } = await supabase
+      .from('review_interactions')
+      .select('*')
+      .eq('review_id', reviewId)
+      .eq('user_id', user.id)
+      .single();
+
+    if (existingInteractions) {
+      toast.error('You have already interacted with this review');
+      return false;
+    }
+
     // First, get the current like count
     const { data: reviewData, error: fetchError } = await supabase
       .from('reviews')
@@ -27,6 +40,19 @@ export const likeReview = async (reviewId: number) => {
 
     if (error) throw error;
     
+    // Record the interaction
+    const { error: interactionError } = await supabase
+      .from('review_interactions')
+      .insert({
+        review_id: reviewId,
+        user_id: user.id,
+        interaction_type: 'like'
+      });
+
+    if (interactionError) {
+      console.error('Error recording interaction:', interactionError);
+    }
+    
     return true;
   } catch (error) {
     console.error('Error liking review:', error);
@@ -41,6 +67,19 @@ export const dislikeReview = async (reviewId: number) => {
     
     if (!user) {
       throw new Error('User not authenticated');
+    }
+
+    // Check if the user has already disliked this review
+    const { data: existingInteractions, error: checkError } = await supabase
+      .from('review_interactions')
+      .select('*')
+      .eq('review_id', reviewId)
+      .eq('user_id', user.id)
+      .single();
+
+    if (existingInteractions) {
+      toast.error('You have already interacted with this review');
+      return false;
     }
 
     // First, get the current dislike count
@@ -59,6 +98,19 @@ export const dislikeReview = async (reviewId: number) => {
       .eq('id', reviewId);
 
     if (error) throw error;
+    
+    // Record the interaction
+    const { error: interactionError } = await supabase
+      .from('review_interactions')
+      .insert({
+        review_id: reviewId,
+        user_id: user.id,
+        interaction_type: 'dislike'
+      });
+
+    if (interactionError) {
+      console.error('Error recording interaction:', interactionError);
+    }
     
     return true;
   } catch (error) {

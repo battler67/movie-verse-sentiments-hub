@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -19,7 +18,7 @@ const LandingPage = () => {
         <div className="flex items-center space-x-2">
           <Film size={32} className="text-movie-primary" />
           <span className="text-2xl font-bold bg-gradient-to-r from-movie-primary to-movie-secondary bg-clip-text text-transparent">
-            MovieVerse
+            Moodies
           </span>
         </div>
         
@@ -143,7 +142,7 @@ const LandingPage = () => {
       </main>
       
       <footer className="container mx-auto px-4 py-8 text-center text-white/60 text-sm">
-        <p>© {new Date().getFullYear()} MovieVerse. All rights reserved.</p>
+        <p>© {new Date().getFullYear()} Moodies. All rights reserved.</p>
         <p className="mt-2">This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
         <div className="mt-4 flex justify-center space-x-4">
           <a 

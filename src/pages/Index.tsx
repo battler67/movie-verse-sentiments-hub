@@ -6,30 +6,35 @@ import Footer from '@/components/layout/Footer';
 import MovieCard from '@/components/movie/MovieCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Film, TrendingUp, Star, Search } from 'lucide-react';
+import { Film, TrendingUp, Star, Search, Clock } from 'lucide-react';
 import { getFeaturedMovies, getTrendingMovies, getMoviesByGenre, GENRES } from '@/services/movieCollectionService';
+import { fetchRecentMovies } from '@/services/recentMoviesService';
 import { useToast } from '@/hooks/use-toast';
 import type { Movie } from '@/types/movie.types';
 
 const Index = () => {
   const [featuredMovies, setFeaturedMovies] = useState<Movie[]>([]);
   const [trendingMovies, setTrendingMovies] = useState<Movie[]>([]);
+  const [recentMovies, setRecentMovies] = useState<Movie[]>([]);
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const [genreMovies, setGenreMovies] = useState<Movie[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [genreSearchQuery, setGenreSearchQuery] = useState("");
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
     const loadInitialMovies = async () => {
       try {
-        const [featured, trending] = await Promise.all([
+        const [featured, trending, recent] = await Promise.all([
           getFeaturedMovies(),
-          getTrendingMovies()
+          getTrendingMovies(),
+          fetchRecentMovies(5)
         ]);
         
         setFeaturedMovies(featured);
         setTrendingMovies(trending);
+        setRecentMovies(recent);
       } catch (error) {
         console.error('Error loading initial movies:', error);
         toast({
@@ -58,6 +63,25 @@ const Index = () => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+    }
+  };
+  
+  const handleGenreSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (genreSearchQuery.trim()) {
+      const matchedGenre = GENRES.find(genre => 
+        genre.toLowerCase().includes(genreSearchQuery.toLowerCase())
+      );
+      
+      if (matchedGenre) {
+        setSelectedGenre(matchedGenre);
+      } else {
+        toast({
+          title: "Genre not found",
+          description: "Please enter a valid genre name",
+          variant: "destructive"
+        });
+      }
     }
   };
   
@@ -117,6 +141,24 @@ const Index = () => {
         
         <section className="py-10 bg-movie-dark">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <form onSubmit={handleGenreSearch} className="max-w-2xl mx-auto mb-6">
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    type="search" 
+                    placeholder="Search for genres..." 
+                    className="w-full pl-10 bg-movie-darker border-white/10"
+                    value={genreSearchQuery}
+                    onChange={(e) => setGenreSearchQuery(e.target.value)}
+                  />
+                </div>
+                <Button type="submit" className="bg-movie-primary hover:bg-movie-primary/90">
+                  Find Genre
+                </Button>
+              </div>
+            </form>
+            
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
               {GENRES.map((genre) => (
                 <Button 
@@ -134,6 +176,35 @@ const Index = () => {
             </div>
           </div>
         </section>
+        
+        {!selectedGenre && (
+          <section className="py-16">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center">
+                  <Clock className="text-movie-primary mr-2" size={20} />
+                  <h2 className="text-xl font-bold">Recent Movies</h2>
+                </div>
+                <Button variant="link" className="text-movie-primary">
+                  View All
+                </Button>
+              </div>
+              
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                {recentMovies.map((movie) => (
+                  <MovieCard
+                    key={movie.id}
+                    id={parseInt(movie.id)}
+                    title={movie.title}
+                    posterPath={movie.posterPath}
+                    year={movie.year}
+                    rating={movie.rating}
+                  />
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
         
         {selectedGenre && (
           <section className="py-16">
