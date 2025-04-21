@@ -10,26 +10,28 @@ export const likeReview = async (reviewId: number) => {
       throw new Error('User not authenticated');
     }
 
-    // First, check if the user has already liked or disliked this review
-    // We'll store this information in the reviews table itself
+    // Fetch review data including liked_by and disliked_by (UUID arrays)
     const { data: reviewData, error: fetchError } = await supabase
       .from('reviews')
       .select('user_likes, user_dislikes, liked_by, disliked_by')
       .eq('id', reviewId)
-      .single();
+      .maybeSingle();
 
     if (fetchError) throw fetchError;
+    if (!reviewData) {
+      toast.error('Review not found');
+      return false;
+    }
 
-    // Check if user has already interacted with this review
-    const likedByArray = reviewData.liked_by || [];
-    const dislikedByArray = reviewData.disliked_by || [];
-    
+    // These should be arrays, but let's make sure to treat them correctly
+    const likedByArray = Array.isArray(reviewData.liked_by) ? reviewData.liked_by : [];
+    const dislikedByArray = Array.isArray(reviewData.disliked_by) ? reviewData.disliked_by : [];
+
     if (likedByArray.includes(user.id) || dislikedByArray.includes(user.id)) {
       toast.error('You have already interacted with this review');
       return false;
     }
 
-    // Then increment like count and add user to liked_by array
     const { error } = await supabase
       .from('reviews')
       .update({ 
@@ -56,25 +58,27 @@ export const dislikeReview = async (reviewId: number) => {
       throw new Error('User not authenticated');
     }
 
-    // First, check if the user has already liked or disliked this review
+    // Fetch review data including liked_by and disliked_by (UUID arrays)
     const { data: reviewData, error: fetchError } = await supabase
       .from('reviews')
       .select('user_likes, user_dislikes, liked_by, disliked_by')
       .eq('id', reviewId)
-      .single();
+      .maybeSingle();
 
     if (fetchError) throw fetchError;
+    if (!reviewData) {
+      toast.error('Review not found');
+      return false;
+    }
 
-    // Check if user has already interacted with this review
-    const likedByArray = reviewData.liked_by || [];
-    const dislikedByArray = reviewData.disliked_by || [];
+    const likedByArray = Array.isArray(reviewData.liked_by) ? reviewData.liked_by : [];
+    const dislikedByArray = Array.isArray(reviewData.disliked_by) ? reviewData.disliked_by : [];
     
     if (likedByArray.includes(user.id) || dislikedByArray.includes(user.id)) {
       toast.error('You have already interacted with this review');
       return false;
     }
 
-    // Then increment dislike count and add user to disliked_by array
     const { error } = await supabase
       .from('reviews')
       .update({ 

@@ -39,6 +39,8 @@ export type Database = {
       "previous user reviews of a particular movie": {
         Row: {
           created_at: string
+          disliked_by: string[] | null
+          liked_by: string[] | null
           "movie id": number
           review: string | null
           "user id": string | null
@@ -49,6 +51,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          disliked_by?: string[] | null
+          liked_by?: string[] | null
           "movie id"?: number
           review?: string | null
           "user id"?: string | null
@@ -59,6 +63,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          disliked_by?: string[] | null
+          liked_by?: string[] | null
           "movie id"?: number
           review?: string | null
           "user id"?: string | null
@@ -96,7 +102,9 @@ export type Database = {
       reviews: {
         Row: {
           created_at: string
+          disliked_by: string[] | null
           id: number
+          liked_by: string[] | null
           movie_id: string | null
           review_text: string | null
           sentiment: string | null
@@ -108,7 +116,9 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          disliked_by?: string[] | null
           id?: number
+          liked_by?: string[] | null
           movie_id?: string | null
           review_text?: string | null
           sentiment?: string | null
@@ -120,7 +130,9 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          disliked_by?: string[] | null
           id?: number
+          liked_by?: string[] | null
           movie_id?: string | null
           review_text?: string | null
           sentiment?: string | null
