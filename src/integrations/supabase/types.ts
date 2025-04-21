@@ -166,7 +166,6 @@ export type Database = {
           user_age: number | null
           user_description: string | null
           user_gender: string | null
-          user_id: number
           user_prefernces: string | null
           username: string | null
         }
@@ -176,7 +175,6 @@ export type Database = {
           user_age?: number | null
           user_description?: string | null
           user_gender?: string | null
-          user_id?: number
           user_prefernces?: string | null
           username?: string | null
         }
@@ -186,7 +184,6 @@ export type Database = {
           user_age?: number | null
           user_description?: string | null
           user_gender?: string | null
-          user_id?: number
           user_prefernces?: string | null
           username?: string | null
         }
