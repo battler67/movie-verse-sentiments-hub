@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, Film, Info, Bookmark, User, LogOut, X } from 'lucide-react';
@@ -73,7 +72,6 @@ const Navbar = () => {
   }, [searchQuery]);
 
   useEffect(() => {
-    // Handle clicks outside the dropdown
     const handleClickOutside = (event: MouseEvent) => {
       if (
         dropdownRef.current && 
@@ -259,6 +257,13 @@ const Navbar = () => {
                       {watchlist.length}
                     </span>
                   )}
+                </Link>
+                
+                <Link to="/profile">
+                  <Button variant="ghost" size="sm" className="text-white/80 hover:text-white">
+                    <User size={16} className="mr-1" />
+                    Profile
+                  </Button>
                 </Link>
                 
                 <DropdownMenu>

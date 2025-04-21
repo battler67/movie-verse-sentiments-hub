@@ -6,26 +6,33 @@ export interface ReviewData {
   movie_id: string;
   stars: number;
   review_text: string;
-  username: string;
 }
 
 export const submitReview = async (reviewData: ReviewData) => {
   try {
-    // First get the user session
+    // Get user session
     const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      throw new Error('User not authenticated');
+    if (!user) throw new Error('User not authenticated');
+
+    // Try to get username from profile
+    let username = user.email || "Anonymous";
+    const { data: profile } = await supabase
+      .from("user profile details")
+      .select("username")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (profile && profile.username) {
+      username = profile.username;
     }
 
-    // Then insert the review with the user_id
+    // Insert review
     const { error } = await supabase
       .from('reviews')
       .insert({
         movie_id: reviewData.movie_id,
         stars: reviewData.stars,
         review_text: reviewData.review_text,
-        username: reviewData.username,
+        username: username,
         user_id: user.id,
         user_likes: 0,
         user_dislikes: 0

@@ -159,6 +159,39 @@ export type Database = {
         }
         Relationships: []
       }
+      "user profile details": {
+        Row: {
+          created_at: string
+          email: string | null
+          user_age: number | null
+          user_description: string | null
+          user_gender: string | null
+          user_id: number
+          user_prefernces: string | null
+          username: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          user_age?: number | null
+          user_description?: string | null
+          user_gender?: string | null
+          user_id?: number
+          user_prefernces?: string | null
+          username?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          user_age?: number | null
+          user_description?: string | null
+          user_gender?: string | null
+          user_id?: number
+          user_prefernces?: string | null
+          username?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

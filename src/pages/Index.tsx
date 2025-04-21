@@ -5,12 +5,41 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import MovieCard from '@/components/movie/MovieCard';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Film, TrendingUp, Star, Search, Clock } from 'lucide-react';
+import { Film, TrendingUp, Star, Clock } from 'lucide-react';
 import { getFeaturedMovies, getTrendingMovies, getMoviesByGenre, GENRES } from '@/services/movieCollectionService';
 import { fetchRecentMovies } from '@/services/recentMoviesService';
 import { useToast } from '@/hooks/use-toast';
 import type { Movie } from '@/types/movie.types';
+
+// Helper to get hardcoded Telugu movie objects for demo
+const getRecentTeluguMovies = (): Movie[] => [
+  {
+    id: "888888",
+    title: "Guntur Kaaram",
+    year: "2024",
+    posterPath: "https://image.tmdb.org/t/p/w500/hi3F2qxd7r6txFDkTgAtEW8Vt17.jpg", // Example poster
+    rating: 4.5,
+    imdbRating: "9.0",
+    overview: "A powerful Telugu action drama.",
+    backdropPath: undefined,
+    releaseDate: "2024-01-20",
+    voteCount: 1589,
+    genres: ["Telugu", "Action"]
+  },
+  {
+    id: "777777",
+    title: "Hanuman",
+    year: "2024",
+    posterPath: "https://image.tmdb.org/t/p/w500/iCtxvDqYyjcUfP5nBOgkBMgpTDw.jpg", // Example poster
+    rating: 4.2,
+    imdbRating: "8.7",
+    overview: "A superhero Telugu fantasy adventure.",
+    backdropPath: undefined,
+    releaseDate: "2024-02-10",
+    voteCount: 1201,
+    genres: ["Telugu", "Fantasy"]
+  }
+];
 
 const Index = () => {
   const [featuredMovies, setFeaturedMovies] = useState<Movie[]>([]);
@@ -18,7 +47,6 @@ const Index = () => {
   const [recentMovies, setRecentMovies] = useState<Movie[]>([]);
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const [genreMovies, setGenreMovies] = useState<Movie[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
   const [genreSearchQuery, setGenreSearchQuery] = useState("");
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -29,12 +57,18 @@ const Index = () => {
         const [featured, trending, recent] = await Promise.all([
           getFeaturedMovies(),
           getTrendingMovies(),
-          fetchRecentMovies(5)
+          fetchRecentMovies(3) // fetch only 3 API movies, we'll add the 2 Telugu after
         ]);
-        
+        const telugu = getRecentTeluguMovies();
         setFeaturedMovies(featured);
         setTrendingMovies(trending);
-        setRecentMovies(recent);
+
+        // Ensure Telugu are unique/not duplicated
+        const recentMoviesDedup = [...telugu, ...recent.filter(
+            (m) => !telugu.some((t) => t.title === m.title)
+        )].slice(0, 5);
+
+        setRecentMovies(recentMoviesDedup);
       } catch (error) {
         console.error('Error loading initial movies:', error);
         toast({
@@ -44,35 +78,27 @@ const Index = () => {
         });
       }
     };
-    
+
     loadInitialMovies();
   }, [toast]);
-  
+
   useEffect(() => {
     if (selectedGenre) {
       const loadGenreMovies = async () => {
         const movies = await getMoviesByGenre(selectedGenre);
         setGenreMovies(movies);
       };
-      
+
       loadGenreMovies();
     }
   }, [selectedGenre]);
-  
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
-    }
-  };
-  
+
   const handleGenreSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (genreSearchQuery.trim()) {
-      const matchedGenre = GENRES.find(genre => 
+      const matchedGenre = GENRES.find(genre =>
         genre.toLowerCase().includes(genreSearchQuery.toLowerCase())
       );
-      
       if (matchedGenre) {
         setSelectedGenre(matchedGenre);
       } else {
@@ -84,11 +110,11 @@ const Index = () => {
       }
     }
   };
-  
+
   const handleGenreClick = (genre: string) => {
     setSelectedGenre(genre);
   };
-  
+
   const handleExploreClick = () => {
     const searchElement = document.getElementById('search-section');
     if (searchElement) {
@@ -99,7 +125,7 @@ const Index = () => {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
-      
+
       <main className="flex-1">
         <section className="hero-gradient py-16 md:py-24">
           <div className="container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -116,54 +142,35 @@ const Index = () => {
             </div>
           </div>
         </section>
-        
-        <section id="search-section" className="py-10 bg-movie-dark">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <form onSubmit={handleSearch} className="max-w-2xl mx-auto">
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input 
-                    type="search" 
-                    placeholder="Search for movies..." 
-                    className="w-full pl-10 bg-movie-darker border-white/10"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
-                <Button type="submit" className="bg-movie-primary hover:bg-movie-primary/90">
-                  Search
-                </Button>
-              </div>
-            </form>
-          </div>
-        </section>
-        
+
+        {/* Removed search-section for "Search for movies..." */}
+
         <section className="py-10 bg-movie-dark">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <form onSubmit={handleGenreSearch} className="max-w-2xl mx-auto mb-6">
               <div className="flex gap-2">
                 <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input 
-                    type="search" 
-                    placeholder="Search for genres..." 
-                    className="w-full pl-10 bg-movie-darker border-white/10"
+                  {/* Search icon left */}
+                  <input 
+                    type="search"
+                    placeholder="Search for genres..."
+                    className="w-full pl-10 bg-movie-darker border-white/10 rounded-lg px-3 py-2 text-base md:text-sm text-white placeholder:text-muted-foreground outline-none"
                     value={genreSearchQuery}
                     onChange={(e) => setGenreSearchQuery(e.target.value)}
                   />
+                  <Film className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 </div>
                 <Button type="submit" className="bg-movie-primary hover:bg-movie-primary/90">
                   Find Genre
                 </Button>
               </div>
             </form>
-            
+
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
               {GENRES.map((genre) => (
                 <Button 
-                  key={genre} 
-                  variant={selectedGenre === genre ? "default" : "outline"} 
+                  key={genre}
+                  variant={selectedGenre === genre ? "default" : "outline"}
                   className={selectedGenre === genre 
                     ? "bg-movie-primary hover:bg-movie-primary/90" 
                     : "border-white/10 hover:border-movie-primary/50 hover:bg-movie-primary/5"}
@@ -176,7 +183,7 @@ const Index = () => {
             </div>
           </div>
         </section>
-        
+
         {!selectedGenre && (
           <section className="py-16">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -189,7 +196,7 @@ const Index = () => {
                   View All
                 </Button>
               </div>
-              
+
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
                 {recentMovies.map((movie) => (
                   <MovieCard
@@ -205,7 +212,7 @@ const Index = () => {
             </div>
           </section>
         )}
-        
+
         {selectedGenre && (
           <section className="py-16">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -222,7 +229,7 @@ const Index = () => {
                   View All Categories
                 </Button>
               </div>
-              
+
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {genreMovies.map((movie) => (
                   <MovieCard
@@ -238,7 +245,7 @@ const Index = () => {
             </div>
           </section>
         )}
-        
+
         {!selectedGenre && (
           <section className="py-16">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -251,7 +258,7 @@ const Index = () => {
                   View All
                 </Button>
               </div>
-              
+
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {featuredMovies.map((movie) => (
                   <MovieCard
@@ -267,7 +274,7 @@ const Index = () => {
             </div>
           </section>
         )}
-        
+
         {!selectedGenre && (
           <section className="py-16 bg-movie-dark">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -280,7 +287,7 @@ const Index = () => {
                   View All
                 </Button>
               </div>
-              
+
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {trendingMovies.map((movie) => (
                   <MovieCard
@@ -297,7 +304,7 @@ const Index = () => {
           </section>
         )}
       </main>
-      
+
       <Footer />
     </div>
   );

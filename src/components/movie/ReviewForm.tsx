@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { ReviewData } from '@/services/review/submitReview';
+import { ReviewData, submitReview } from '@/services/review/submitReview';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -20,6 +20,7 @@ const ReviewForm = ({ movieId, onSubmit, isSubmitting }: ReviewFormProps) => {
   const [reviewText, setReviewText] = useState("");
   const [hasReviewed, setHasReviewed] = useState(false);
   const [isCheckingReview, setIsCheckingReview] = useState(true);
+  const [username, setUsername] = useState("");
   const { user } = useAuth();
 
   useEffect(() => {
@@ -38,6 +39,14 @@ const ReviewForm = ({ movieId, onSubmit, isSubmitting }: ReviewFormProps) => {
           .eq('user_id', user.id);
 
         if (error) throw error;
+
+        // Also check profile for name
+        const { data: profile } = await supabase
+          .from("user profile details")
+          .select("username")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (profile && profile.username) setUsername(profile.username);
 
         // Also check the previous reviews table
         const { data: previousReviews, error: prevError } = await supabase
@@ -64,29 +73,24 @@ const ReviewForm = ({ movieId, onSubmit, isSubmitting }: ReviewFormProps) => {
 
   const handleSubmit = async () => {
     if (!user) return;
-    
     if (hasReviewed) {
       toast.error('You have already reviewed this movie');
       return;
     }
-
     if (userRating === 0) {
       toast.error('Please select a rating');
       return;
     }
-
     if (reviewText.trim() === '') {
       toast.error('Please enter a review comment');
       return;
     }
-
+    // Use the username state (from profile), don't pass username from email
     const reviewData: ReviewData = {
       movie_id: movieId,
       stars: userRating,
       review_text: reviewText,
-      username: user.email || 'Anonymous',
     };
-
     await onSubmit(reviewData);
     setUserRating(0);
     setReviewText("");
@@ -126,7 +130,7 @@ const ReviewForm = ({ movieId, onSubmit, isSubmitting }: ReviewFormProps) => {
 
   return (
     <>
-      <h3 className="text-lg font-medium mb-4">Write a Review</h3>
+      <h3 className="text-lg font-medium mb-4">Write a Review {username && <span className="font-normal text-white/60">as {username}</span>}</h3>
       <div className="flex items-center space-x-1 mb-4">
         {Array.from({ length: 5 }).map((_, i) => (
           <Star 
