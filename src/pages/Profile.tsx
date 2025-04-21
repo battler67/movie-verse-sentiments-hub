@@ -28,30 +28,48 @@ const Profile = () => {
     if (user) {
       const fetchProfile = async () => {
         setLoading(true);
-        const { data, error } = await supabase
-          .from("user profile details")
-          .select("*")
-          .eq("user_id", user.id)
-          .maybeSingle();
-        
-        if (error) {
-          console.error("Error fetching profile:", error);
-          toast.error("Failed to load profile");
+        try {
+          // Convert the string ID to a number for Supabase query
+          // This is a workaround as the database expects a number but auth provides a string UUID
+          const numericId = Number(user.id);
+          
+          if (isNaN(numericId)) {
+            // Handle the case where user.id is not a valid number
+            console.error("Invalid user ID format:", user.id);
+            toast.error("Invalid user ID format");
+            setLoading(false);
+            return;
+          }
+          
+          const { data, error } = await supabase
+            .from("user profile details")
+            .select("*")
+            .eq("user_id", numericId)
+            .maybeSingle();
+          
+          if (error) {
+            console.error("Error fetching profile:", error);
+            toast.error("Failed to load profile");
+          }
+          
+          if (data) {
+            setForm({
+              username: data.username || "",
+              user_age: data.user_age ? String(data.user_age) : "",
+              user_gender: data.user_gender || "",
+              user_description: data.user_description || "",
+              email: data.email || user.email || "",
+              user_prefernces: data.user_prefernces || ""
+            });
+            // If profile exists, consider it saved for display purposes
+            setProfileSaved(true);
+          }
+        } catch (error) {
+          console.error("Error in fetchProfile:", error);
+          toast.error("An unexpected error occurred while loading profile");
+        } finally {
+          setLoading(false);
         }
-        
-        if (data) {
-          setForm({
-            username: data.username || "",
-            user_age: data.user_age ? String(data.user_age) : "",
-            user_gender: data.user_gender || "",
-            user_description: data.user_description || "",
-            email: data.email || user.email || "",
-            user_prefernces: data.user_prefernces || ""
-          });
-          // If profile exists, consider it saved for display purposes
-          setProfileSaved(true);
-        }
-        setLoading(false);
       };
       fetchProfile();
     }
@@ -89,11 +107,20 @@ const Profile = () => {
     setLoading(true);
     setProfileSaved(false);
     try {
+      // Convert the string ID to a number for Supabase upsert
+      const numericId = Number(user.id);
+      
+      if (isNaN(numericId)) {
+        toast.error("Invalid user ID format");
+        setLoading(false);
+        return;
+      }
+      
       // upsert (insert or update) profile, ensure all types match Supabase requirements
       const { error } = await supabase
         .from("user profile details")
         .upsert({
-          user_id: user.id,
+          user_id: numericId,
           username: form.username,
           user_age: form.user_age ? Number(form.user_age) : null,
           user_gender: form.user_gender,
