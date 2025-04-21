@@ -25,6 +25,7 @@ export const fetchRecentMovies = async (limit = 5): Promise<Movie[]> => {
         if (!b.release_date) return -1;
         return new Date(b.release_date).getTime() - new Date(a.release_date).getTime();
       });
+      // Take only the specified limit
       return sorted.slice(0, limit).map((movie: any) => ({
         id: movie.id.toString(),
         title: movie.title,

@@ -48,6 +48,8 @@ const Profile = () => {
             email: data.email || user.email || "",
             user_prefernces: data.user_prefernces || ""
           });
+          // If profile exists, consider it saved for display purposes
+          setProfileSaved(true);
         }
         setLoading(false);
       };
@@ -55,9 +57,11 @@ const Profile = () => {
     }
   }, [user]);
 
+  // Handle hash navigation
   useEffect(() => {
-    if (profileSaved && profileBoxRef.current) {
-      profileBoxRef.current.scrollIntoView({ behavior: "smooth" });
+    // Check if there's a hash in the URL that targets the profile box
+    if (window.location.hash === '#user-profile-box' && profileBoxRef.current) {
+      profileBoxRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [profileSaved]);
 
@@ -121,6 +125,7 @@ const Profile = () => {
         {/* Profile saved box */}
         {profileSaved && (
           <div
+            id="user-profile-box"
             ref={profileBoxRef}
             className="max-w-xl mx-auto mb-8 bg-movie-dark border border-movie-primary rounded-lg shadow p-6"
           >

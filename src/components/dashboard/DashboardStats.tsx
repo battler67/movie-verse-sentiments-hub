@@ -12,11 +12,16 @@ interface DashboardStatsProps {
 export const DashboardStats = ({ user, stats }: DashboardStatsProps) => {
   const navigate = useNavigate();
 
+  const handleProfileClick = () => {
+    // Navigate to profile page with a hash to scroll to the profile box
+    navigate('/profile#user-profile-box');
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
       <Card
         className="bg-movie-dark/70 border-white/10 cursor-pointer hover:shadow-lg"
-        onClick={() => navigate('/profile')}
+        onClick={handleProfileClick}
         tabIndex={0}
         aria-label="Go to Profile"
       >

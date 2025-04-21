@@ -19,6 +19,25 @@ const UserDashboard = () => {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  // Single useEffect for navigation to profile
+  const handleHashChange = () => {
+    if (window.location.pathname === '/profile' && window.location.hash === '#user-profile-box') {
+      const el = document.getElementById('user-profile-box');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  // IMPORTANT: All useEffect hooks must be called on every render in the same order
+  useEffect(() => {
+    // Add listener for hash changes
+    window.addEventListener('hashchange', handleHashChange);
+    
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+    };
+  }, []);
+
+  // Load user data in a separate useEffect
   useEffect(() => {
     const loadUserData = async () => {
       if (!user) {
@@ -75,18 +94,6 @@ const UserDashboard = () => {
       </div>
     );
   }
-
-  // To handle focus after navigation to Profile from DashboardStats
-  useEffect(() => {
-    const handleHashChange = () => {
-      if (window.location.pathname === '/profile' && window.location.hash === '#user-profile-box') {
-        const el = document.getElementById('user-profile-box');
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-      }
-    };
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
 
   return (
     <div className="flex flex-col min-h-screen">
