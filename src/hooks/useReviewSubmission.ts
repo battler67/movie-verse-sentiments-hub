@@ -22,8 +22,7 @@ export const useReviewSubmission = (movieId: string) => {
       const reviewData: ReviewData = {
         movie_id: movieId,
         stars,
-        review_text: reviewText,
-        username: user.email || 'Anonymous',
+        review_text: reviewText
       };
 
       const success = await submitReview(reviewData);

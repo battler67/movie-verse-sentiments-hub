@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 const genders = ["Male", "Female", "Other"];
 
@@ -19,7 +20,6 @@ const Profile = () => {
     user_prefernces: ""
   });
   const [loading, setLoading] = useState(false);
-  const [editing, setEditing] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -28,8 +28,14 @@ const Profile = () => {
         const { data, error } = await supabase
           .from("user profile details")
           .select("*")
-          .eq("user_id", user.id)
+          .eq("user_id", parseInt(user.id))
           .maybeSingle();
+        
+        if (error) {
+          console.error("Error fetching profile:", error);
+          toast.error("Failed to load profile");
+        }
+        
         if (data) {
           setForm({
             username: data.username || "",
@@ -68,20 +74,32 @@ const Profile = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // upsert (insert or update) profile
-    const { data, error } = await supabase
-      .from("user profile details")
-      .upsert({
-        user_id: user.id,
-        username: form.username,
-        user_age: form.user_age ? parseInt(form.user_age) : null,
-        user_gender: form.user_gender,
-        user_description: form.user_description,
-        email: form.email,
-        user_prefernces: form.user_prefernces || null,
-      }, { onConflict: "user_id" });
-    setLoading(false);
-    setEditing(false);
+    try {
+      // upsert (insert or update) profile
+      const { error } = await supabase
+        .from("user profile details")
+        .upsert({
+          user_id: parseInt(user.id),
+          username: form.username,
+          user_age: form.user_age ? parseInt(form.user_age) : null,
+          user_gender: form.user_gender,
+          user_description: form.user_description,
+          email: form.email,
+          user_prefernces: form.user_prefernces || null,
+        }, { onConflict: "user_id" });
+      
+      if (error) {
+        console.error("Error updating profile:", error);
+        toast.error("Failed to save profile");
+      } else {
+        toast.success("Profile saved successfully");
+      }
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      toast.error("An unexpected error occurred");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
