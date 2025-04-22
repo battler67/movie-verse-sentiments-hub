@@ -38,16 +38,22 @@ const ReviewList = ({ reviews, onLike, onDislike }: ReviewListProps) => {
       <div className="mb-4 p-4 border border-white/5 rounded-lg bg-movie-dark">
         <div className="flex justify-between items-center">
           <div>
-            <span className="text-white/80 text-sm">Total Reviews: <span className="font-semibold text-white">{reviews.length}</span></span>
+            <span className="text-white/80 text-sm">
+              Total Reviews: <span className="font-semibold text-white">{reviews.length}</span>
+            </span>
           </div>
           <div className="flex space-x-6">
             <div className="flex items-center space-x-1">
               <ThumbsUp size={14} className="text-green-500" />
-              <span className="text-white/80 text-sm">Likes: <span className="font-semibold text-white">{totalLikes}</span></span>
+              <span className="text-white/80 text-sm">
+                Likes: <span className="font-semibold text-white">{totalLikes}</span>
+              </span>
             </div>
             <div className="flex items-center space-x-1">
               <ThumbsDown size={14} className="text-red-500" />
-              <span className="text-white/80 text-sm">Dislikes: <span className="font-semibold text-white">{totalDislikes}</span></span>
+              <span className="text-white/80 text-sm">
+                Dislikes: <span className="font-semibold text-white">{totalDislikes}</span>
+              </span>
             </div>
           </div>
         </div>
@@ -57,7 +63,7 @@ const ReviewList = ({ reviews, onLike, onDislike }: ReviewListProps) => {
         {reviews.map((review) => (
           <div key={review.id} className="border border-white/5 rounded-lg bg-movie-dark p-4 md:p-6">
             <div className="flex items-start justify-between">
-              <ReviewCard 
+              <ReviewCard
                 username={review.username}
                 date={new Date(review.created_at).toLocaleDateString()}
                 rating={review.stars}
@@ -66,14 +72,14 @@ const ReviewList = ({ reviews, onLike, onDislike }: ReviewListProps) => {
               />
             </div>
             <div className="mt-4 flex items-center space-x-4">
-              <button 
+              <button
                 className="flex items-center space-x-1 text-white/60 hover:text-white"
                 onClick={() => onLike(review.id)}
               >
                 <ThumbsUp size={16} />
                 <span>{review.user_likes || 0}</span>
               </button>
-              <button 
+              <button
                 className="flex items-center space-x-1 text-white/60 hover:text-white"
                 onClick={() => onDislike(review.id)}
               >
