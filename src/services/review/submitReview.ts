@@ -19,7 +19,7 @@ export const submitReview = async (reviewData: ReviewData) => {
     const { data: profile } = await supabase
       .from("user profile details")
       .select("username")
-      .eq("user_id", parseInt(user.id))
+      .eq("email", user.email)
       .maybeSingle();
     if (profile && profile.username) {
       username = profile.username;
