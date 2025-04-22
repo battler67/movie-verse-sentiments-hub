@@ -162,32 +162,29 @@ export type Database = {
       "user profile details": {
         Row: {
           created_at: string
-          email: string | null
+          email: string
           user_age: number | null
           user_description: string | null
           user_gender: string | null
           user_preferences: string | null
-          user_prefernces: string | null
           username: string | null
         }
         Insert: {
           created_at?: string
-          email?: string | null
+          email?: string
           user_age?: number | null
           user_description?: string | null
           user_gender?: string | null
           user_preferences?: string | null
-          user_prefernces?: string | null
           username?: string | null
         }
         Update: {
           created_at?: string
-          email?: string | null
+          email?: string
           user_age?: number | null
           user_description?: string | null
           user_gender?: string | null
           user_preferences?: string | null
-          user_prefernces?: string | null
           username?: string | null
         }
         Relationships: []
