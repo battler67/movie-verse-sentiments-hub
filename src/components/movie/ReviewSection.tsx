@@ -65,14 +65,11 @@ const ReviewSection = ({ movieId }: ReviewSectionProps) => {
     }
     
     try {
-      await likeReview(reviewId);
-      setReviews(prevReviews => 
-        prevReviews.map(review => 
-          review.id === reviewId 
-            ? { ...review, user_likes: (review.user_likes || 0) + 1 } 
-            : review
-        )
-      );
+      const success = await likeReview(reviewId);
+      if (success) {
+        const updatedReviews = await getMovieReviews(movieId);
+        setReviews(updatedReviews);
+      }
     } catch (error) {
       console.error("Error liking review:", error);
       toast.error("Failed to like review");
@@ -86,14 +83,11 @@ const ReviewSection = ({ movieId }: ReviewSectionProps) => {
     }
     
     try {
-      await dislikeReview(reviewId);
-      setReviews(prevReviews => 
-        prevReviews.map(review => 
-          review.id === reviewId 
-            ? { ...review, user_dislikes: (review.user_dislikes || 0) + 1 } 
-            : review
-        )
-      );
+      const success = await dislikeReview(reviewId);
+      if (success) {
+        const updatedReviews = await getMovieReviews(movieId);
+        setReviews(updatedReviews);
+      }
     } catch (error) {
       console.error("Error disliking review:", error);
       toast.error("Failed to dislike review");

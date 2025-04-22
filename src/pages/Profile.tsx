@@ -32,7 +32,7 @@ const Profile = () => {
           const { data, error } = await supabase
             .from("user profile details")
             .select("*")
-            .eq("email", user.email)
+            .eq("user_id", user.id)
             .maybeSingle();
 
           if (error) {
@@ -81,11 +81,12 @@ const Profile = () => {
     setLoading(true);
     setProfileSaved(false);
     try {
-      if (!form.email) {
-        toast.error("Email is required");
+      if (!user) {
+        toast.error("You must be logged in to save your profile");
         setLoading(false);
         return;
       }
+
       const upsertData = {
         email: form.email,
         username: form.username,
@@ -93,10 +94,12 @@ const Profile = () => {
         user_gender: form.user_gender,
         user_description: form.user_description,
         user_preferences: form.user_preferences,
+        user_id: user.id
       };
+      
       const { error } = await supabase
         .from("user profile details")
-        .upsert(upsertData, { onConflict: "email" });
+        .upsert(upsertData, { onConflict: "user_id" });
 
       if (error) {
         console.error("Error updating profile:", error);

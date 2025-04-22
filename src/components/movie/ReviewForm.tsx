@@ -1,13 +1,15 @@
 
-import { useState, useEffect } from 'react';
-import { Star } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { ReviewData, submitReview } from '@/services/review/submitReview';
-import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Star } from 'lucide-react';
+import SentimentTag from './SentimentTag';
+
+export interface ReviewData {
+  stars: number;
+  review_text: string;
+}
 
 interface ReviewFormProps {
   movieId: string;
@@ -16,149 +18,95 @@ interface ReviewFormProps {
 }
 
 const ReviewForm = ({ movieId, onSubmit, isSubmitting }: ReviewFormProps) => {
-  const [userRating, setUserRating] = useState(0);
-  const [reviewText, setReviewText] = useState("");
-  const [hasReviewed, setHasReviewed] = useState(false);
-  const [isCheckingReview, setIsCheckingReview] = useState(true);
-  const [username, setUsername] = useState("");
+  const [stars, setStars] = useState(0);
+  const [reviewText, setReviewText] = useState('');
+  const [hoveredStar, setHoveredStar] = useState(0);
   const { user } = useAuth();
-
-  useEffect(() => {
-    const checkExistingReview = async () => {
-      if (!user) {
-        setIsCheckingReview(false);
-        return;
-      }
-
-      setIsCheckingReview(true);
-      try {
-        const { data: existingReviews, error } = await supabase
-          .from('reviews')
-          .select('id')
-          .eq('movie_id', movieId)
-          .eq('user_id', user.id);
-
-        if (error) throw error;
-
-        // Also check profile for name
-        const { data: profile } = await supabase
-          .from("user profile details")
-          .select("username")
-          .eq("email", user.email)
-          .maybeSingle();
-          
-        if (profile && profile.username) setUsername(profile.username);
-
-        // Also check the previous reviews table
-        const { data: previousReviews, error: prevError } = await supabase
-          .from('previous user reviews of a particular movie')
-          .select('*')
-          .eq('movie id', parseInt(movieId))
-          .eq('user id', user.id);
-
-        if (prevError) throw prevError;
-
-        setHasReviewed(
-          (existingReviews && existingReviews.length > 0) || 
-          (previousReviews && previousReviews.length > 0)
-        );
-      } catch (error) {
-        console.error('Error checking existing review:', error);
-      } finally {
-        setIsCheckingReview(false);
-      }
-    };
-
-    checkExistingReview();
-  }, [user, movieId]);
-
-  const handleSubmit = async () => {
-    if (!user) return;
-    if (hasReviewed) {
-      toast.error('You have already reviewed this movie');
-      return;
-    }
-    if (userRating === 0) {
-      toast.error('Please select a rating');
-      return;
-    }
-    if (reviewText.trim() === '') {
-      toast.error('Please enter a review comment');
-      return;
-    }
-    // Use the username state (from profile), don't pass username from email
-    const reviewData: ReviewData = {
-      movie_id: movieId,
-      stars: userRating,
-      review_text: reviewText,
-    };
-    await onSubmit(reviewData);
-    setUserRating(0);
-    setReviewText("");
-    setHasReviewed(true);
+  
+  const handleStarClick = (rating: number) => {
+    setStars(rating);
   };
-
+  
+  const handleStarHover = (rating: number) => {
+    setHoveredStar(rating);
+  };
+  
+  const handleStarLeave = () => {
+    setHoveredStar(0);
+  };
+  
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!stars) {
+      return;
+    }
+    
+    await onSubmit({
+      stars,
+      review_text: reviewText,
+    });
+    
+    // Reset form after submission
+    setStars(0);
+    setReviewText('');
+  };
+  
   if (!user) {
     return (
       <div className="text-center py-6">
-        <h3 className="text-lg font-medium mb-2">Want to share your thoughts?</h3>
-        <p className="text-white/60 mb-4">Sign in to write a review and join the conversation.</p>
-        <Link to="/login">
-          <Button className="bg-movie-primary hover:bg-movie-primary/90">
-            Sign In to Review
-          </Button>
-        </Link>
+        <p className="text-white/70 mb-3">Please sign in to leave a review</p>
+        <Button asChild variant="outline">
+          <a href="/login">Sign In</a>
+        </Button>
       </div>
     );
   }
-
-  if (isCheckingReview) {
-    return (
-      <div className="text-center py-6">
-        <p className="text-white/60">Loading...</p>
-      </div>
-    );
-  }
-
-  if (hasReviewed) {
-    return (
-      <div className="text-center py-6">
-        <h3 className="text-lg font-medium mb-2">Thank you for your review!</h3>
-        <p className="text-white/60 mb-4">You have already reviewed this movie.</p>
-      </div>
-    );
-  }
-
+  
   return (
-    <>
-      <h3 className="text-lg font-medium mb-4">Write a Review {username && <span className="font-normal text-white/60">as {username}</span>}</h3>
-      <div className="flex items-center space-x-1 mb-4">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Star 
-            key={i} 
-            size={24} 
-            className={`cursor-pointer ${
-              i < userRating ? "text-yellow-400" : "text-white/20 hover:text-yellow-400"
-            }`}
-            onClick={() => setUserRating(i + 1)}
-          />
-        ))}
+    <form onSubmit={handleSubmit}>
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-medium">Write a Review</h3>
+        <SentimentTag sentiment="neutral" className="border border-white/5" />
       </div>
-      <Textarea 
-        placeholder="Share your thoughts on this movie..." 
-        className="bg-movie-darker border-white/10 mb-4" 
-        rows={4}
+      
+      <div className="mb-4">
+        <div className="flex items-center mb-2">
+          <span className="text-sm text-white/70 mr-2">Your Rating:</span>
+          <div className="flex">
+            {[1, 2, 3, 4, 5].map((rating) => (
+              <Star
+                key={rating}
+                className={`h-5 w-5 cursor-pointer ${
+                  rating <= (hoveredStar || stars) 
+                    ? 'text-yellow-400 fill-yellow-400' 
+                    : 'text-gray-400'
+                }`}
+                onClick={() => handleStarClick(rating)}
+                onMouseEnter={() => handleStarHover(rating)}
+                onMouseLeave={handleStarLeave}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+      
+      <Textarea
+        placeholder="Share your thoughts about this movie..."
         value={reviewText}
         onChange={(e) => setReviewText(e.target.value)}
+        className="bg-movie-darker border-white/10 min-h-[100px] mb-4"
       />
-      <Button 
-        className="bg-movie-primary hover:bg-movie-primary/90"
-        onClick={handleSubmit}
-        disabled={isSubmitting}
-      >
-        {isSubmitting ? "Submitting..." : "Submit Review"}
-      </Button>
-    </>
+      
+      <div className="flex justify-end">
+        <Button 
+          type="submit" 
+          disabled={isSubmitting || !stars || !reviewText.trim()} 
+          className="bg-movie-primary hover:bg-movie-primary/90"
+        >
+          {isSubmitting ? 'Submitting...' : 'Submit Review'}
+        </Button>
+      </div>
+    </form>
   );
 };
 

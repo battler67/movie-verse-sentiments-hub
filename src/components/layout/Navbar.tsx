@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, Film, Info, Bookmark, User, LogOut, X } from 'lucide-react';
+import { Search, Film, Bookmark, User, LogOut, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useWatchlist } from '@/contexts/WatchlistContext';
@@ -24,6 +24,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import { ThemeToggle } from '@/components/layout/ThemeToggle';
 
 const Navbar = () => {
   const { watchlist } = useWatchlist();
@@ -238,12 +239,7 @@ const Navbar = () => {
           </div>
           
           <div className="flex items-center space-x-4">
-            <Link to="/about">
-              <Button variant="ghost" size="sm" className="text-white/80 hover:text-white">
-                <Info size={16} className="mr-1" />
-                About
-              </Button>
-            </Link>
+            <ThemeToggle />
             
             {user ? (
               <>
