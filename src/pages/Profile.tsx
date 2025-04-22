@@ -27,7 +27,7 @@ const Profile = () => {
     user_gender: "",
     user_description: "",
     email: "",
-    user_prefernces: "all"
+    user_preferences: "all"
   });
   const [profileSaved, setProfileSaved] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -57,7 +57,7 @@ const Profile = () => {
               user_gender: data.user_gender || "",
               user_description: data.user_description || "",
               email: data.email || user.email || "",
-              user_prefernces: data.user_prefernces || "all"
+              user_preferences: data.user_preferences || "all"
             });
             setProfileSaved(true);
           } else {
@@ -107,7 +107,7 @@ const Profile = () => {
         user_age: form.user_age ? Number(form.user_age) : null,
         user_gender: form.user_gender,
         user_description: form.user_description,
-        user_prefernces: form.user_prefernces || "all",
+        user_preferences: form.user_preferences || "all",
       };
       const { error } = await supabase
         .from("user profile details")
@@ -175,7 +175,7 @@ const Profile = () => {
               </div>
               <div>
                 <span className="font-semibold text-movie-primary">Preferences: </span>
-                <span>{preferences.find(p => p.value === form.user_prefernces)?.label ?? "All genres"}</span>
+                <span>{preferences.find(p => p.value === form.user_preferences)?.label ?? "All genres"}</span>
               </div>
               <div>
                 <span className="font-semibold text-movie-primary">Description: </span>
@@ -230,9 +230,9 @@ const Profile = () => {
           <div>
             <label className="block font-semibold mb-1">Preferences</label>
             <select
-              name="user_prefernces"
+              name="user_preferences"
               className="w-full px-3 py-2 rounded border border-white/10 bg-movie-darker text-white"
-              value={form.user_prefernces}
+              value={form.user_preferences}
               onChange={onChange}
               disabled={loading}
             >
