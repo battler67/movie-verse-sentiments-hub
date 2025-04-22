@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import MovieCard from '@/components/movie/MovieCard';
-import { Button } from '@/components/ui/button';
-import { Film, TrendingUp, Star } from 'lucide-react';
-import { getFeaturedMovies, getTrendingMovies, getMoviesByGenre, GENRES } from '@/services/movieCollectionService';
 import { useToast } from '@/hooks/use-toast';
 import type { Movie } from '@/types/movie.types';
+import { getFeaturedMovies, getTrendingMovies, getMoviesByGenre } from '@/services/movieCollectionService';
+import Hero from '@/components/home/Hero';
+import GenreSearch from '@/components/home/GenreSearch';
+import FeaturedMovies from '@/components/home/FeaturedMovies';
+import TrendingMovies from '@/components/home/TrendingMovies';
 import LatestReleases from '@/components/movie/LatestReleases';
 
 const Index = () => {
@@ -17,7 +17,6 @@ const Index = () => {
   const [genreMovies, setGenreMovies] = useState<Movie[]>([]);
   const [genreSearchQuery, setGenreSearchQuery] = useState("");
   const { toast } = useToast();
-  const navigate = useNavigate();
 
   useEffect(() => {
     const loadInitialMovies = async () => {
@@ -70,10 +69,6 @@ const Index = () => {
     }
   };
 
-  const handleGenreClick = (genre: string) => {
-    setSelectedGenre(genre);
-  };
-
   const handleExploreClick = () => {
     const searchElement = document.getElementById('search-section');
     if (searchElement) {
@@ -84,119 +79,22 @@ const Index = () => {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
-
       <main className="flex-1">
-        <section className="hero-gradient py-16 md:py-24">
-          <div className="container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center space-y-5">
-              <h1 className="text-3xl md:text-5xl font-bold text-white">
-                Welcome to <span className="text-movie-primary">Moodies</span>
-              </h1>
-              <p className="text-white/70 max-w-2xl mx-auto text-base md:text-lg">
-                bcuz every review has a vibe - Discover movies, read sentiment-analyzed reviews, and find where to watch them.
-              </p>
-              <Button className="bg-movie-primary hover:bg-movie-primary/90 mt-4 px-6 py-2 text-lg" onClick={handleExploreClick}>
-                Explore Movies
-              </Button>
-            </div>
-          </div>
-        </section>
-
-        <section className="py-10 bg-movie-dark">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <form onSubmit={handleGenreSearch} className="max-w-2xl mx-auto mb-6">
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <input 
-                    type="search"
-                    placeholder="Search for genres..."
-                    className="w-full pl-10 bg-movie-darker border-white/10 rounded-lg px-3 py-2 text-base md:text-sm text-white placeholder:text-muted-foreground outline-none"
-                    value={genreSearchQuery}
-                    onChange={(e) => setGenreSearchQuery(e.target.value)}
-                  />
-                  <Film className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                </div>
-                <Button type="submit" className="bg-movie-primary hover:bg-movie-primary/90">
-                  Find Genre
-                </Button>
-              </div>
-            </form>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
-              {GENRES.map((genre) => (
-                <Button 
-                  key={genre}
-                  variant={selectedGenre === genre ? "default" : "outline"}
-                  className={selectedGenre === genre 
-                    ? "bg-movie-primary hover:bg-movie-primary/90" 
-                    : "border-white/10 hover:border-movie-primary/50 hover:bg-movie-primary/5"}
-                  onClick={() => handleGenreClick(genre)}
-                >
-                  <Film size={16} className="mr-2" />
-                  {genre}
-                </Button>
-              ))}
-            </div>
-          </div>
-        </section>
+        <Hero onExploreClick={handleExploreClick} />
+        
+        <GenreSearch
+          selectedGenre={selectedGenre}
+          genreSearchQuery={genreSearchQuery}
+          onGenreSearch={handleGenreSearch}
+          onGenreClick={setSelectedGenre}
+          onGenreQueryChange={setGenreSearchQuery}
+        />
 
         {!selectedGenre && (
           <>
             <LatestReleases />
-
-            <section className="py-16">
-              <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex items-center justify-between mb-8">
-                  <div className="flex items-center">
-                    <Star className="text-movie-primary mr-2" size={20} />
-                    <h2 className="text-xl font-bold">Featured Movies</h2>
-                  </div>
-                  <Button variant="link" className="text-movie-primary">
-                    View All
-                  </Button>
-                </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                  {featuredMovies.map((movie) => (
-                    <MovieCard
-                      key={movie.id}
-                      id={parseInt(movie.id)}
-                      title={movie.title}
-                      posterPath={movie.posterPath}
-                      year={movie.year}
-                      rating={movie.rating}
-                    />
-                  ))}
-                </div>
-              </div>
-            </section>
-
-            <section className="py-16 bg-movie-dark">
-              <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex items-center justify-between mb-8">
-                  <div className="flex items-center">
-                    <TrendingUp className="text-movie-primary mr-2" size={20} />
-                    <h2 className="text-xl font-bold">Trending Now</h2>
-                  </div>
-                  <Button variant="link" className="text-movie-primary">
-                    View All
-                  </Button>
-                </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                  {trendingMovies.map((movie) => (
-                    <MovieCard
-                      key={movie.id}
-                      id={parseInt(movie.id)}
-                      title={movie.title}
-                      posterPath={movie.posterPath}
-                      year={movie.year}
-                      rating={movie.rating}
-                    />
-                  ))}
-                </div>
-              </div>
-            </section>
+            <FeaturedMovies movies={featuredMovies} />
+            <TrendingMovies movies={trendingMovies} />
           </>
         )}
 
@@ -233,7 +131,6 @@ const Index = () => {
           </section>
         )}
       </main>
-
       <Footer />
     </div>
   );
