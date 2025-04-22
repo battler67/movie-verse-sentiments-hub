@@ -5,18 +5,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-
-const genders = ["Male", "Female", "Other"];
-const preferences = [
-  { value: "all", label: "All genres" },
-  { value: "action", label: "Action" },
-  { value: "romantic", label: "Romantic" },
-  { value: "comedy", label: "Comedy" },
-  { value: "drama", label: "Drama" },
-  { value: "horror", label: "Horror" }
-];
+import ProfileForm from '@/components/profile/ProfileForm';
+import ProfileDisplay from '@/components/profile/ProfileDisplay';
 
 const Profile = () => {
   const { user } = useAuth();
@@ -31,10 +22,8 @@ const Profile = () => {
   });
   const [profileSaved, setProfileSaved] = useState(false);
   const [loading, setLoading] = useState(false);
-
   const profileBoxRef = useRef<HTMLDivElement>(null);
 
-  // LOAD EXISTING PROFILE BY EMAIL (since user_id has been removed)
   useEffect(() => {
     if (user?.email) {
       const fetchProfile = async () => {
@@ -61,7 +50,6 @@ const Profile = () => {
             });
             setProfileSaved(true);
           } else {
-            // Set default email for new users
             setForm(f => ({ ...f, email: user.email || '' }));
           }
         } catch (error) {
@@ -75,14 +63,12 @@ const Profile = () => {
     }
   }, [user]);
 
-  // Scroll to profile box if hash provided
   useEffect(() => {
     if (window.location.hash === '#user-profile-box' && profileBoxRef.current) {
       profileBoxRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [profileSaved]);
 
-  // Simple field handler
   const onChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setForm(f => ({
       ...f,
@@ -90,7 +76,6 @@ const Profile = () => {
     }));
   };
 
-  // SUBMIT PROFILE (UPSERT by "email")
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -107,7 +92,7 @@ const Profile = () => {
         user_age: form.user_age ? Number(form.user_age) : null,
         user_gender: form.user_gender,
         user_description: form.user_description,
-        user_preferences: form.user_preferences || "all",
+        user_preferences: form.user_preferences,
       };
       const { error } = await supabase
         .from("user profile details")
@@ -148,125 +133,26 @@ const Profile = () => {
       <Navbar />
       <main className="flex-1 container mx-auto px-4 pt-8 pb-24">
         <h1 className="text-3xl font-bold mb-8">My Profile</h1>
-        {/* Profile Details Display */}
+        
         {profileSaved && (
-          <div
-            id="user-profile-box"
-            ref={profileBoxRef}
-            className="max-w-xl mx-auto mb-8 bg-movie-dark border border-movie-primary rounded-lg shadow p-6"
-          >
-            <h2 className="text-2xl font-semibold mb-3">Your Profile Details</h2>
-            <div className="space-y-2">
-              <div>
-                <span className="font-semibold text-movie-primary">Username: </span>
-                <span>{form.username}</span>
-              </div>
-              <div>
-                <span className="font-semibold text-movie-primary">Email: </span>
-                <span>{form.email}</span>
-              </div>
-              <div>
-                <span className="font-semibold text-movie-primary">Age: </span>
-                <span>{form.user_age}</span>
-              </div>
-              <div>
-                <span className="font-semibold text-movie-primary">Gender: </span>
-                <span>{form.user_gender}</span>
-              </div>
-              <div>
-                <span className="font-semibold text-movie-primary">Preferences: </span>
-                <span>{preferences.find(p => p.value === form.user_preferences)?.label ?? "All genres"}</span>
-              </div>
-              <div>
-                <span className="font-semibold text-movie-primary">Description: </span>
-                <span>{form.user_description}</span>
-              </div>
-            </div>
+          <div id="user-profile-box" ref={profileBoxRef}>
+            <ProfileDisplay
+              username={form.username}
+              email={form.email}
+              age={form.user_age}
+              gender={form.user_gender}
+              preferences={form.user_preferences}
+              description={form.user_description}
+            />
           </div>
         )}
 
-        {/* FORM */}
-        <form className="max-w-xl mx-auto bg-movie-dark rounded-lg shadow p-6 space-y-6" onSubmit={handleSubmit}>
-          <div>
-            <label className="block font-semibold mb-1">Username</label>
-            <input
-              type="text"
-              name="username"
-              className="w-full px-3 py-2 rounded border border-white/10 bg-movie-darker text-white"
-              value={form.username}
-              onChange={onChange}
-              required
-              disabled={loading}
-            />
-          </div>
-          <div>
-            <label className="block font-semibold mb-1">Age</label>
-            <input
-              type="number"
-              name="user_age"
-              className="w-full px-3 py-2 rounded border border-white/10 bg-movie-darker text-white"
-              value={form.user_age}
-              onChange={onChange}
-              min={10}
-              max={100}
-              disabled={loading}
-            />
-          </div>
-          <div>
-            <label className="block font-semibold mb-1">Gender</label>
-            <select
-              name="user_gender"
-              className="w-full px-3 py-2 rounded border border-white/10 bg-movie-darker text-white"
-              value={form.user_gender}
-              onChange={onChange}
-              disabled={loading}
-            >
-              <option value="">Select Gender</option>
-              {genders.map((g) => (
-                <option key={g} value={g}>{g}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block font-semibold mb-1">Preferences</label>
-            <select
-              name="user_preferences"
-              className="w-full px-3 py-2 rounded border border-white/10 bg-movie-darker text-white"
-              value={form.user_preferences}
-              onChange={onChange}
-              disabled={loading}
-            >
-              {preferences.map((option) => (
-                <option key={option.value} value={option.value}>{option.label}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block font-semibold mb-1">Description</label>
-            <textarea
-              name="user_description"
-              className="w-full px-3 py-2 rounded border border-white/10 bg-movie-darker text-white"
-              rows={3}
-              value={form.user_description}
-              onChange={onChange}
-              disabled={loading}
-            />
-          </div>
-          <div>
-            <label className="block font-semibold mb-1">Email</label>
-            <input
-              type="email"
-              name="email"
-              className="w-full px-3 py-2 rounded border border-white/10 bg-movie-darker text-white"
-              value={form.email}
-              readOnly
-              disabled
-            />
-          </div>
-          <Button type="submit" className="bg-movie-primary hover:bg-movie-primary/90 w-full" disabled={loading}>
-            {loading ? "Saving..." : "Save Profile"}
-          </Button>
-        </form>
+        <ProfileForm
+          form={form}
+          onChange={onChange}
+          onSubmit={handleSubmit}
+          loading={loading}
+        />
       </main>
       <Footer />
     </div>
