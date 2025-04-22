@@ -44,8 +44,9 @@ const ReviewForm = ({ movieId, onSubmit, isSubmitting }: ReviewFormProps) => {
         const { data: profile } = await supabase
           .from("user profile details")
           .select("username")
-          .eq("user_id", parseInt(user.id))
+          .eq("email", user.email)
           .maybeSingle();
+          
         if (profile && profile.username) setUsername(profile.username);
 
         // Also check the previous reviews table

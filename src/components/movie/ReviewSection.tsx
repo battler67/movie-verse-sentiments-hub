@@ -10,6 +10,7 @@ import { likeReview, dislikeReview } from '@/services/review/reviewInteractions'
 import ReviewForm from './ReviewForm';
 import ReviewList from './ReviewList';
 import ReviewSkeleton from './ReviewSkeleton';
+import { ReviewData } from '@/services/review/submitReview';
 
 interface ReviewSectionProps {
   movieId: string;
@@ -38,7 +39,7 @@ const ReviewSection = ({ movieId }: ReviewSectionProps) => {
     loadReviews();
   }, [movieId]);
 
-  const onSubmitReview = async (reviewData: any) => {
+  const onSubmitReview = async (reviewData: ReviewData) => {
     if (!user) {
       toast.error("Please log in to submit a review");
       return;
