@@ -11,12 +11,20 @@ import ReviewForm from './ReviewForm';
 import ReviewList from './ReviewList';
 import ReviewSkeleton from './ReviewSkeleton';
 import { ReviewData } from '@/services/review/submitReview';
+import { analyzeSentiment } from '@/services/sentimentAnalysis';
 
 interface ReviewSectionProps {
   movieId: string;
 }
 
 const SENTIMENTS: Array<'positive' | 'negative' | 'neutral'> = ['positive', 'neutral', 'negative'];
+
+// Google Ads conversion tracking
+const trackConversion = () => {
+  if (window.gtag) {
+    window.gtag('event', 'ads_conversion_Sign_up_1', {});
+  }
+};
 
 const ReviewSection = ({ movieId }: ReviewSectionProps) => {
   const [reviews, setReviews] = useState<any[]>([]);
@@ -30,7 +38,43 @@ const ReviewSection = ({ movieId }: ReviewSectionProps) => {
       setIsLoading(true);
       try {
         const reviewData = await getMovieReviews(movieId);
-        setReviews(reviewData);
+        
+        // Mark reviews as analyzing initially
+        const reviewsWithAnalysis = reviewData.map(review => ({
+          ...review,
+          isAnalyzing: true
+        }));
+        
+        setReviews(reviewsWithAnalysis);
+        
+        // Process each review for sentiment analysis
+        reviewsWithAnalysis.forEach(async (review, index) => {
+          try {
+            const result = await analyzeSentiment(review.review_text);
+            setReviews(prevReviews => {
+              const updatedReviews = [...prevReviews];
+              updatedReviews[index] = {
+                ...updatedReviews[index],
+                sentiment: result.sentiment,
+                confidence: result.confidence,
+                isAnalyzing: false
+              };
+              return updatedReviews;
+            });
+          } catch (error) {
+            console.error("Error analyzing sentiment:", error);
+            setReviews(prevReviews => {
+              const updatedReviews = [...prevReviews];
+              updatedReviews[index] = {
+                ...updatedReviews[index],
+                sentiment: 'neutral',
+                confidence: 45,
+                isAnalyzing: false
+              };
+              return updatedReviews;
+            });
+          }
+        });
       } catch (error) {
         console.error("Error loading reviews:", error);
         toast.error("Failed to load reviews");
@@ -50,8 +94,61 @@ const ReviewSection = ({ movieId }: ReviewSectionProps) => {
     try {
       const success = await handleSubmit(reviewData.stars, reviewData.review_text);
       if (success) {
+        // Track conversion
+        trackConversion();
+        
+        // Reload reviews after successful submission
         const updatedReviews = await getMovieReviews(movieId);
-        setReviews(updatedReviews);
+        
+        // Add analyzing state to the new review (which should be the latest one)
+        const newReviewWithAnalysis = updatedReviews.map((review, index) => {
+          // If it's a new review (not in previous list), mark as analyzing
+          const isNewReview = !reviews.some(r => r.id === review.id);
+          return {
+            ...review,
+            isAnalyzing: isNewReview
+          };
+        });
+        
+        setReviews(newReviewWithAnalysis);
+        
+        // Analyze sentiment for the newly added review (which should be the latest)
+        const newReview = updatedReviews.find(review => !reviews.some(r => r.id === review.id));
+        
+        if (newReview) {
+          const newReviewIndex = newReviewWithAnalysis.findIndex(r => r.id === newReview.id);
+          
+          try {
+            const result = await analyzeSentiment(newReview.review_text);
+            
+            setReviews(prevReviews => {
+              const updatedReviews = [...prevReviews];
+              if (newReviewIndex !== -1) {
+                updatedReviews[newReviewIndex] = {
+                  ...updatedReviews[newReviewIndex],
+                  sentiment: result.sentiment,
+                  confidence: result.confidence,
+                  isAnalyzing: false
+                };
+              }
+              return updatedReviews;
+            });
+          } catch (error) {
+            console.error("Error analyzing sentiment for new review:", error);
+            setReviews(prevReviews => {
+              const updatedReviews = [...prevReviews];
+              if (newReviewIndex !== -1) {
+                updatedReviews[newReviewIndex] = {
+                  ...updatedReviews[newReviewIndex],
+                  sentiment: 'neutral',
+                  confidence: 45,
+                  isAnalyzing: false
+                };
+              }
+              return updatedReviews;
+            });
+          }
+        }
       }
     } catch (error) {
       console.error("Error submitting review:", error);
@@ -68,7 +165,19 @@ const ReviewSection = ({ movieId }: ReviewSectionProps) => {
       const success = await likeReview(reviewId);
       if (success) {
         const updatedReviews = await getMovieReviews(movieId);
-        setReviews(updatedReviews);
+        
+        // Preserve sentiment analysis data when updating reviews
+        const mergedReviews = updatedReviews.map(updatedReview => {
+          const existingReview = reviews.find(r => r.id === updatedReview.id);
+          return {
+            ...updatedReview,
+            sentiment: existingReview?.sentiment || 'neutral',
+            confidence: existingReview?.confidence || 45,
+            isAnalyzing: existingReview?.isAnalyzing || false
+          };
+        });
+        
+        setReviews(mergedReviews);
       }
     } catch (error) {
       console.error("Error liking review:", error);
@@ -85,7 +194,19 @@ const ReviewSection = ({ movieId }: ReviewSectionProps) => {
       const success = await dislikeReview(reviewId);
       if (success) {
         const updatedReviews = await getMovieReviews(movieId);
-        setReviews(updatedReviews);
+        
+        // Preserve sentiment analysis data when updating reviews
+        const mergedReviews = updatedReviews.map(updatedReview => {
+          const existingReview = reviews.find(r => r.id === updatedReview.id);
+          return {
+            ...updatedReview,
+            sentiment: existingReview?.sentiment || 'neutral',
+            confidence: existingReview?.confidence || 45,
+            isAnalyzing: existingReview?.isAnalyzing || false
+          };
+        });
+        
+        setReviews(mergedReviews);
       }
     } catch (error) {
       console.error("Error disliking review:", error);

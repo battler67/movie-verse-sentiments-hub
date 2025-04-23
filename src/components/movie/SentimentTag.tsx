@@ -6,10 +6,12 @@ type SentimentType = 'positive' | 'negative' | 'neutral';
 
 interface SentimentTagProps {
   sentiment: SentimentType;
+  confidence?: number;
+  isAnalyzing?: boolean;
   className?: string;
 }
 
-const SentimentTag = ({ sentiment, className = '' }: SentimentTagProps) => {
+const SentimentTag = ({ sentiment, confidence, isAnalyzing = false, className = '' }: SentimentTagProps) => {
   const getIcon = () => {
     switch (sentiment) {
       case 'positive':
@@ -23,8 +25,19 @@ const SentimentTag = ({ sentiment, className = '' }: SentimentTagProps) => {
 
   return (
     <span className={`sentiment-tag sentiment-${sentiment} flex items-center space-x-1 ${className}`}>
-      {getIcon()}
-      <span className="capitalize">{sentiment}</span>
+      {isAnalyzing ? (
+        <>
+          <span className="text-xs animate-pulse">Analyzing review...</span>
+        </>
+      ) : (
+        <>
+          {getIcon()}
+          <span className="capitalize">{sentiment}</span>
+          {confidence !== undefined && (
+            <span className="text-xs opacity-80 ml-1">({confidence}%)</span>
+          )}
+        </>
+      )}
     </span>
   );
 };

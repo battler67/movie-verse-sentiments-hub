@@ -9,6 +9,8 @@ interface Review {
   stars: number;
   review_text: string;
   sentiment: 'positive' | 'negative' | 'neutral';
+  confidence?: number;
+  isAnalyzing?: boolean;
   user_likes: number;
   user_dislikes: number;
 }
@@ -69,6 +71,8 @@ const ReviewList = ({ reviews, onLike, onDislike }: ReviewListProps) => {
                 rating={review.stars}
                 comment={review.review_text}
                 sentiment={review.sentiment}
+                confidence={review.confidence}
+                isAnalyzing={review.isAnalyzing}
               />
             </div>
             <div className="mt-4 flex items-center space-x-4">

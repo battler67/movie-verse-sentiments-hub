@@ -25,6 +25,8 @@ export const UserReviews = ({ reviews }: UserReviewsProps) => {
                 rating={review.stars}
                 comment={review.review_text}
                 sentiment={review.sentiment || "neutral"}
+                confidence={review.confidence || 45}
+                isAnalyzing={review.isAnalyzing || false}
               />
               <div className="mt-4 flex items-center space-x-4">
                 <div className="flex items-center space-x-1 text-white/60">
@@ -59,3 +61,5 @@ export const UserReviews = ({ reviews }: UserReviewsProps) => {
     </>
   );
 };
+
+export default UserReviews;

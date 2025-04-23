@@ -11,6 +11,8 @@ interface ReviewCardProps {
   rating: number;
   comment: string;
   sentiment: SentimentType;
+  confidence?: number;
+  isAnalyzing?: boolean;
 }
 
 // Pick a random sentiment for display next to the user/email for visual fun
@@ -19,7 +21,7 @@ function getRandomSentiment(): SentimentType {
   return sentiments[Math.floor(Math.random() * sentiments.length)];
 }
 
-const ReviewCard = ({ username, date, rating, comment, sentiment }: ReviewCardProps) => {
+const ReviewCard = ({ username, date, rating, comment, sentiment, confidence, isAnalyzing = false }: ReviewCardProps) => {
   const randomSentiment = React.useMemo(() => getRandomSentiment(), []);
   return (
     <div className="w-full">
@@ -54,8 +56,12 @@ const ReviewCard = ({ username, date, rating, comment, sentiment }: ReviewCardPr
           </div>
         </div>
         <div className="ml-auto">
-          {/* The review's own sentiment (not random) */}
-          <SentimentTag sentiment={sentiment} />
+          {/* The review's own sentiment (not random) with confidence */}
+          <SentimentTag 
+            sentiment={sentiment} 
+            confidence={confidence} 
+            isAnalyzing={isAnalyzing} 
+          />
         </div>
       </div>
 

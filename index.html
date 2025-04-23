@@ -26,6 +26,17 @@
 
       gtag('config', 'AW-17026951556');
     </script>
+    
+    <!-- Google tag (gtag.js) event - this will be triggered programmatically -->
+    <script>
+      function triggerConversion() {
+        if (typeof gtag === 'function') {
+          gtag('event', 'ads_conversion_Sign_up_1', {
+            // Add event parameters if needed
+          });
+        }
+      }
+    </script>
   </head>
 
   <body>
@@ -35,4 +46,3 @@
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-
