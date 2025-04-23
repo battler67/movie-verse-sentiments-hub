@@ -1,6 +1,7 @@
 
 import { ThumbsUp, ThumbsDown } from 'lucide-react';
 import ReviewCard from './ReviewCard';
+import ReviewInteractions from './ReviewInteractions';
 
 interface Review {
   id: number;
@@ -19,9 +20,10 @@ interface ReviewListProps {
   reviews: Review[];
   onLike: (reviewId: number) => Promise<void>;
   onDislike: (reviewId: number) => Promise<void>;
+  isProcessing?: boolean;
 }
 
-const ReviewList = ({ reviews, onLike, onDislike }: ReviewListProps) => {
+const ReviewList = ({ reviews, onLike, onDislike, isProcessing }: ReviewListProps) => {
   // Calculate total likes and dislikes
   const totalLikes = reviews.reduce((sum, review) => sum + (review.user_likes || 0), 0);
   const totalDislikes = reviews.reduce((sum, review) => sum + (review.user_dislikes || 0), 0);
@@ -75,21 +77,15 @@ const ReviewList = ({ reviews, onLike, onDislike }: ReviewListProps) => {
                 isAnalyzing={review.isAnalyzing}
               />
             </div>
-            <div className="mt-4 flex items-center space-x-4">
-              <button
-                className="flex items-center space-x-1 text-white/60 hover:text-white"
-                onClick={() => onLike(review.id)}
-              >
-                <ThumbsUp size={16} />
-                <span>{review.user_likes || 0}</span>
-              </button>
-              <button
-                className="flex items-center space-x-1 text-white/60 hover:text-white"
-                onClick={() => onDislike(review.id)}
-              >
-                <ThumbsDown size={16} />
-                <span>{review.user_dislikes || 0}</span>
-              </button>
+            <div className="mt-4">
+              <ReviewInteractions
+                reviewId={review.id}
+                likes={review.user_likes}
+                dislikes={review.user_dislikes}
+                onLike={onLike}
+                onDislike={onDislike}
+                isProcessing={isProcessing}
+              />
             </div>
           </div>
         ))}

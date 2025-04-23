@@ -1,12 +1,8 @@
-
 import { useAuth } from '@/contexts/AuthContext';
 import { useReviewSubmission } from '@/hooks/useReviewSubmission';
 import { useReviewFilters } from '@/hooks/useReviewFilters';
 import { useReviewManagement } from '@/hooks/useReviewManagement';
-import { getMovieReviews } from '@/services/review/getReviews';
-import { likeReview, dislikeReview } from '@/services/review/reviewInteractions';
-import { analyzeSentiment } from '@/services/sentimentAnalysis';
-import { toast } from 'sonner';
+import { useReviewInteractions } from '@/hooks/useReviewInteractions';
 import ReviewForm from './ReviewForm';
 import ReviewList from './ReviewList';
 import ReviewSkeleton from './ReviewSkeleton';
@@ -28,6 +24,7 @@ const ReviewSection = ({ movieId }: ReviewSectionProps) => {
   const { handleSubmit, isSubmitting } = useReviewSubmission(movieId);
   const { reviews, setReviews, isLoading } = useReviewManagement(movieId);
   const { selectedSentiment, setSelectedSentiment, filteredReviews, resetFilter } = useReviewFilters(reviews);
+  const { handleLikeReview, handleDislikeReview, isProcessing } = useReviewInteractions(movieId, setReviews);
 
   const onSubmitReview = async (reviewData: ReviewData) => {
     if (!user) {
@@ -93,56 +90,6 @@ const ReviewSection = ({ movieId }: ReviewSectionProps) => {
     }
   };
 
-  const handleLikeReview = async (reviewId: number) => {
-    if (!user) {
-      toast.error("Please log in to like a review");
-      return;
-    }
-    try {
-      const success = await likeReview(reviewId);
-      if (success) {
-        const updatedReviews = await getMovieReviews(movieId);
-        setReviews(updatedReviews.map(updatedReview => {
-          const existingReview = reviews.find(r => r.id === updatedReview.id);
-          return {
-            ...updatedReview,
-            sentiment: existingReview?.sentiment || 'neutral',
-            confidence: existingReview?.confidence || 45,
-            isAnalyzing: existingReview?.isAnalyzing || false
-          };
-        }));
-      }
-    } catch (error) {
-      console.error("Error liking review:", error);
-      toast.error("Failed to like review");
-    }
-  };
-
-  const handleDislikeReview = async (reviewId: number) => {
-    if (!user) {
-      toast.error("Please log in to dislike a review");
-      return;
-    }
-    try {
-      const success = await dislikeReview(reviewId);
-      if (success) {
-        const updatedReviews = await getMovieReviews(movieId);
-        setReviews(updatedReviews.map(updatedReview => {
-          const existingReview = reviews.find(r => r.id === updatedReview.id);
-          return {
-            ...updatedReview,
-            sentiment: existingReview?.sentiment || 'neutral',
-            confidence: existingReview?.confidence || 45,
-            isAnalyzing: existingReview?.isAnalyzing || false
-          };
-        }));
-      }
-    } catch (error) {
-      console.error("Error disliking review:", error);
-      toast.error("Failed to dislike review");
-    }
-  };
-
   return (
     <div className="mt-12">
       <ReviewHeader
@@ -164,6 +111,7 @@ const ReviewSection = ({ movieId }: ReviewSectionProps) => {
           reviews={filteredReviews}
           onLike={handleLikeReview}
           onDislike={handleDislikeReview}
+          isProcessing={isProcessing}
         />
       )}
     </div>
