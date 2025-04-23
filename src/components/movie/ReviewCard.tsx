@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { User, Star, Calendar } from 'lucide-react';
 import SentimentTag from './SentimentTag';
@@ -22,20 +21,21 @@ function getRandomSentiment(): SentimentType {
 }
 
 const ReviewCard = ({ username, date, rating, comment, sentiment, confidence, isAnalyzing = false }: ReviewCardProps) => {
-  const randomSentiment = React.useMemo(() => getRandomSentiment(), []);
   return (
     <div className="w-full">
       <div className="flex items-center space-x-3">
         <div className="w-8 h-8 rounded-full bg-movie-primary/20 flex items-center justify-center">
           <User size={14} className="text-movie-primary" />
         </div>
-        <div>
-          <h4 className="text-sm font-medium flex items-center">
+        <div className="flex-1">
+          <h4 className="text-sm font-medium flex items-center flex-wrap gap-2">
             {username}
-            {/* Show a random sentiment tag beside the username (to right) */}
-            <span className="ml-2">
-              <SentimentTag sentiment={randomSentiment} />
-            </span>
+            <SentimentTag 
+              sentiment={sentiment} 
+              confidence={confidence} 
+              isAnalyzing={isAnalyzing}
+              className="text-xs"
+            />
           </h4>
           <div className="flex items-center space-x-2 mt-0.5">
             <div className="flex items-center text-yellow-400">
@@ -54,14 +54,6 @@ const ReviewCard = ({ username, date, rating, comment, sentiment, confidence, is
               {date}
             </span>
           </div>
-        </div>
-        <div className="ml-auto">
-          {/* The review's own sentiment (not random) with confidence */}
-          <SentimentTag 
-            sentiment={sentiment} 
-            confidence={confidence} 
-            isAnalyzing={isAnalyzing} 
-          />
         </div>
       </div>
 
