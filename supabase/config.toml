@@ -3,3 +3,4 @@ project_id = "uxvhloltifucsvgawnce"
 
 [functions]
 [functions.sentiment-analysis]
+[functions.deduplicate-reviews]

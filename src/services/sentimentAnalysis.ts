@@ -30,3 +30,22 @@ export const analyzeSentiment = async (text: string): Promise<SentimentAnalysis>
     return { sentiment: 'neutral', confidence: 50 };
   }
 };
+
+// Function to deduplicate reviews for a movie
+export const deduplicateReviews = async (movieId: string): Promise<number> => {
+  try {
+    const { data, error } = await supabase.functions.invoke('deduplicate-reviews', {
+      body: { movieId }
+    });
+
+    if (error) {
+      console.error("Deduplication error:", error);
+      throw error;
+    }
+
+    return data?.removed || 0;
+  } catch (error) {
+    console.error("Failed to deduplicate reviews:", error);
+    return 0;
+  }
+};
