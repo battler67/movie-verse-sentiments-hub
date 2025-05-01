@@ -17,10 +17,11 @@ export const submitReview = async (reviewData: ReviewData) => {
     // Try to get username from profile
     let username = user.email || "Anonymous";
     const { data: profile } = await supabase
-      .from("user profile details")
+      .from("user_profiles")
       .select("username")
       .eq("email", user.email)
       .maybeSingle();
+    
     if (profile && profile.username) {
       username = profile.username;
     }
