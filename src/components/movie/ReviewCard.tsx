@@ -23,15 +23,14 @@ const ReviewCard = ({ username, date, rating, comment, sentiment, confidence, is
           <User size={14} className="text-movie-primary" />
         </div>
         <div className="flex-1">
-          <h4 className="text-sm font-medium flex items-center flex-wrap gap-2">
-            {username}
+          <div className="flex items-center flex-wrap gap-2">
+            <h4 className="text-sm font-medium">{username}</h4>
             <SentimentTag 
               sentiment={sentiment} 
               confidence={confidence} 
               isAnalyzing={isAnalyzing}
-              className="text-xs"
             />
-          </h4>
+          </div>
           <div className="flex items-center space-x-2 mt-0.5">
             <div className="flex items-center text-yellow-400">
               {Array.from({ length: 5 }).map((_, i) => (

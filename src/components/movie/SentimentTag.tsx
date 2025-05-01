@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Check, X, CircleDot } from 'lucide-react';
+import { Check, X, CircleDot, Loader2 } from 'lucide-react';
 
 type SentimentType = 'positive' | 'negative' | 'neutral';
 
@@ -15,26 +15,38 @@ const SentimentTag = ({ sentiment, confidence, isAnalyzing = false, className = 
   const getIcon = () => {
     switch (sentiment) {
       case 'positive':
-        return <Check size={12} />;
+        return <Check size={12} className="text-green-500" />;
       case 'negative':
-        return <X size={12} />;
+        return <X size={12} className="text-red-500" />;
       case 'neutral':
-        return <CircleDot size={12} />;
+        return <CircleDot size={12} className="text-yellow-500" />;
+    }
+  };
+
+  const getTagColor = () => {
+    switch (sentiment) {
+      case 'positive':
+        return 'bg-green-500/10 text-green-500 border-green-500/20';
+      case 'negative':
+        return 'bg-red-500/10 text-red-500 border-red-500/20';
+      case 'neutral':
+        return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
     }
   };
 
   return (
-    <span className={`sentiment-tag sentiment-${sentiment} flex items-center space-x-1 ${className}`}>
+    <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs border ${getTagColor()} ${className}`}>
       {isAnalyzing ? (
         <>
-          <span className="text-xs animate-pulse">Analyzing review...</span>
+          <Loader2 size={12} className="mr-1 animate-spin" />
+          <span>Analyzing...</span>
         </>
       ) : (
         <>
-          {getIcon()}
+          <span className="mr-1">{getIcon()}</span>
           <span className="capitalize">{sentiment}</span>
-          {confidence !== undefined && (
-            <span className="text-xs opacity-80 ml-1">({confidence}%)</span>
+          {confidence !== undefined && confidence > 0 && (
+            <span className="ml-1 opacity-80">({confidence}%)</span>
           )}
         </>
       )}

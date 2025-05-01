@@ -1,10 +1,6 @@
 
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-
-interface SentimentResult {
-  label: string;
-  score: number;
-}
 
 export interface SentimentAnalysis {
   sentiment: 'positive' | 'negative' | 'neutral';
@@ -12,50 +8,23 @@ export interface SentimentAnalysis {
 }
 
 export const analyzeSentiment = async (text: string): Promise<SentimentAnalysis> => {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-
   try {
-    const response = await fetch("https://bert-sentiment-api.onrender.com/analyze", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      signal: controller.signal,
-      body: JSON.stringify({ text })
+    // Call our Supabase Edge Function for sentiment analysis
+    const { data, error } = await supabase.functions.invoke('sentiment-analysis', {
+      body: { text }
     });
 
-    clearTimeout(timeoutId);
-    
-    if (!response.ok) {
-      throw new Error("API Error");
+    if (error) {
+      console.error("Supabase Edge Function error:", error);
+      throw error;
     }
-
-    const data = await response.json();
-    const result = data[0] as SentimentResult;
     
-    // Normalize sentiment
-    let sentiment: 'positive' | 'negative' | 'neutral';
-    if (result && result.label) {
-      if (result.label.toLowerCase().includes('positive')) {
-        sentiment = 'positive';
-      } else if (result.label.toLowerCase().includes('negative')) {
-        sentiment = 'negative';
-      } else {
-        sentiment = 'neutral';
-      }
-    } else {
-      sentiment = 'neutral';
-    }
-
-    // Convert confidence score to percentage
-    const confidence = result && typeof result.score === 'number' 
-      ? Math.round(result.score * 100)
-      : 50;
-
-    return { sentiment, confidence };
+    return {
+      sentiment: data.sentiment || 'neutral',
+      confidence: data.confidence || 50
+    };
   } catch (error) {
-    console.error("Sentiment API error:", error);
+    console.error("Sentiment analysis error:", error);
     toast.error("Failed to analyze sentiment");
     // Default values if API fails
     return { sentiment: 'neutral', confidence: 50 };

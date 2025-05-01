@@ -23,14 +23,16 @@ export const useReviewManagement = (movieId: string) => {
         setReviews(reviewsWithAnalysis);
         
         // Process reviews that don't have sentiment analysis yet
-        reviewsWithAnalysis.forEach(async (review, index) => {
-          if (!review.sentiment) {
+        for (let i = 0; i < reviewsWithAnalysis.length; i++) {
+          const review = reviewsWithAnalysis[i];
+          if (!review.sentiment && review.review_text) {
             try {
+              console.log(`Analyzing sentiment for review ${i}`);
               const result = await analyzeSentiment(review.review_text);
               setReviews(prevReviews => {
                 const updatedReviews = [...prevReviews];
-                updatedReviews[index] = {
-                  ...updatedReviews[index],
+                updatedReviews[i] = {
+                  ...updatedReviews[i],
                   sentiment: result.sentiment,
                   confidence: result.confidence,
                   isAnalyzing: false
@@ -38,11 +40,11 @@ export const useReviewManagement = (movieId: string) => {
                 return updatedReviews;
               });
             } catch (error) {
-              console.error("Error analyzing sentiment:", error);
+              console.error(`Error analyzing sentiment for review ${i}:`, error);
               setReviews(prevReviews => {
                 const updatedReviews = [...prevReviews];
-                updatedReviews[index] = {
-                  ...updatedReviews[index],
+                updatedReviews[i] = {
+                  ...updatedReviews[i],
                   sentiment: 'neutral',
                   confidence: 45,
                   isAnalyzing: false
@@ -51,7 +53,7 @@ export const useReviewManagement = (movieId: string) => {
               });
             }
           }
-        });
+        }
       } catch (error) {
         console.error("Error loading reviews:", error);
         toast.error("Failed to load reviews");
@@ -59,6 +61,7 @@ export const useReviewManagement = (movieId: string) => {
         setIsLoading(false);
       }
     };
+    
     loadReviews();
   }, [movieId]);
 
