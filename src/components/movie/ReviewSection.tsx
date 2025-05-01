@@ -1,8 +1,12 @@
+
 import { useAuth } from '@/contexts/AuthContext';
 import { useReviewSubmission } from '@/hooks/useReviewSubmission';
 import { useReviewFilters } from '@/hooks/useReviewFilters';
 import { useReviewManagement } from '@/hooks/useReviewManagement';
 import { useReviewInteractions } from '@/hooks/useReviewInteractions';
+import { getMovieReviews } from '@/services/review/getReviews';
+import { analyzeSentiment } from '@/services/sentimentAnalysis';
+import { toast } from 'sonner';
 import ReviewForm from './ReviewForm';
 import ReviewList from './ReviewList';
 import ReviewSkeleton from './ReviewSkeleton';
