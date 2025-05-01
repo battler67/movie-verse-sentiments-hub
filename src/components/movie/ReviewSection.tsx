@@ -46,7 +46,7 @@ const ReviewSection = ({ movieId }: ReviewSectionProps) => {
           const isNewReview = !reviews.some(r => r.id === review.id);
           return {
             ...review,
-            isAnalyzing: isNewReview
+            isAnalyzing: isNewReview && !review.sentiment
           };
         });
         
@@ -54,7 +54,7 @@ const ReviewSection = ({ movieId }: ReviewSectionProps) => {
         
         const newReview = updatedReviews.find(review => !reviews.some(r => r.id === review.id));
         
-        if (newReview) {
+        if (newReview && !newReview.sentiment) {
           const newReviewIndex = newReviewWithAnalysis.findIndex(r => r.id === newReview.id);
           
           try {

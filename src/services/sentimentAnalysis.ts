@@ -13,7 +13,7 @@ export interface SentimentAnalysis {
 
 export const analyzeSentiment = async (text: string): Promise<SentimentAnalysis> => {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minute timeout
+  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
   try {
     const response = await fetch("https://bert-sentiment-api.onrender.com/analyze", {
@@ -51,12 +51,13 @@ export const analyzeSentiment = async (text: string): Promise<SentimentAnalysis>
     // Convert confidence score to percentage
     const confidence = result && typeof result.score === 'number' 
       ? Math.round(result.score * 100)
-      : 45;
+      : 50;
 
     return { sentiment, confidence };
   } catch (error) {
-    console.error("Sentiment API error or timeout:", error);
+    console.error("Sentiment API error:", error);
+    toast.error("Failed to analyze sentiment");
     // Default values if API fails
-    return { sentiment: 'neutral', confidence: 45 };
+    return { sentiment: 'neutral', confidence: 50 };
   }
 };

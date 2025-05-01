@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { User, Star, Calendar } from 'lucide-react';
 import SentimentTag from './SentimentTag';
@@ -12,12 +13,6 @@ interface ReviewCardProps {
   sentiment: SentimentType;
   confidence?: number;
   isAnalyzing?: boolean;
-}
-
-// Pick a random sentiment for display next to the user/email for visual fun
-function getRandomSentiment(): SentimentType {
-  const sentiments: SentimentType[] = ['positive', 'neutral', 'negative'];
-  return sentiments[Math.floor(Math.random() * sentiments.length)];
 }
 
 const ReviewCard = ({ username, date, rating, comment, sentiment, confidence, isAnalyzing = false }: ReviewCardProps) => {

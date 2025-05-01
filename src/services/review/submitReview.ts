@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { analyzeSentiment } from '@/services/sentimentAnalysis';
 
 export interface ReviewData {
   movie_id: string;
@@ -26,6 +27,9 @@ export const submitReview = async (reviewData: ReviewData) => {
       username = profile.username;
     }
 
+    // Analyze sentiment
+    const sentimentResult = await analyzeSentiment(reviewData.review_text);
+
     // Insert review
     const { error } = await supabase
       .from('reviews')
@@ -36,7 +40,9 @@ export const submitReview = async (reviewData: ReviewData) => {
         username: username,
         user_id: user.id,
         user_likes: 0,
-        user_dislikes: 0
+        user_dislikes: 0,
+        sentiment: sentimentResult.sentiment,
+        confidence: sentimentResult.confidence
       });
 
     if (error) throw error;
@@ -49,7 +55,7 @@ export const submitReview = async (reviewData: ReviewData) => {
         'user id': user.id,
         review: reviewData.review_text,
         user_stars: reviewData.stars,
-        user_sentiment: 'neutral', // Default until processed
+        user_sentiment: sentimentResult.sentiment,
         user_likes: 0,
         user_dislikes: 0
       });

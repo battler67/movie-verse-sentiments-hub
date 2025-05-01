@@ -101,6 +101,7 @@ export type Database = {
       }
       reviews: {
         Row: {
+          confidence: number | null
           created_at: string
           disliked_by: string[] | null
           id: number
@@ -115,6 +116,7 @@ export type Database = {
           username: string | null
         }
         Insert: {
+          confidence?: number | null
           created_at?: string
           disliked_by?: string[] | null
           id?: number
@@ -129,6 +131,7 @@ export type Database = {
           username?: string | null
         }
         Update: {
+          confidence?: number | null
           created_at?: string
           disliked_by?: string[] | null
           id?: number
