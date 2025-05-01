@@ -30,9 +30,9 @@ const Profile = () => {
         setLoading(true);
         try {
           const { data, error } = await supabase
-            .from("user profile details")
+            .from("user_profiles")
             .select("*")
-            .eq("user_id", user.id)
+            .eq("id", user.id)
             .maybeSingle();
 
           if (error) {
@@ -79,7 +79,6 @@ const Profile = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setProfileSaved(false);
     try {
       if (!user) {
         toast.error("You must be logged in to save your profile");
@@ -88,25 +87,26 @@ const Profile = () => {
       }
 
       const upsertData = {
+        id: user.id,
         email: form.email,
         username: form.username,
-        user_age: form.user_age ? Number(form.user_age) : null,
+        user_age: form.user_age ? parseInt(form.user_age) : null,
         user_gender: form.user_gender,
         user_description: form.user_description,
         user_preferences: form.user_preferences,
-        user_id: user.id
+        updated_at: new Date().toISOString()
       };
       
       const { error } = await supabase
-        .from("user profile details")
-        .upsert(upsertData, { onConflict: "user_id" });
+        .from("user_profiles")
+        .upsert(upsertData);
 
       if (error) {
         console.error("Error updating profile:", error);
         toast.error("Failed to save profile");
       } else {
         setProfileSaved(true);
-        toast.success("Profile created successfully");
+        toast.success("Profile saved successfully");
         setTimeout(() => {
           navigate("/dashboard");
         }, 1200);
