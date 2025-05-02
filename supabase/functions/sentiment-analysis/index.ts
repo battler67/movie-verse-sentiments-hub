@@ -23,13 +23,13 @@ serve(async (req) => {
       );
     }
 
-    // First try the BERT sentiment API
+    // First try the BERT sentiment API with a longer timeout (3 minutes)
     try {
       console.log("Analyzing text:", text.substring(0, 50) + "...");
       
-      // Set a timeout for the fetch request
+      // Set a timeout for the fetch request - 180 seconds (3 minutes)
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 180000); // 180 second timeout
       
       const response = await fetch("https://bert-sentiment-api.onrender.com/analyze", {
         method: "POST",

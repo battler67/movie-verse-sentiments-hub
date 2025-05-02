@@ -35,7 +35,19 @@ export const useReviewManagement = (movieId: string) => {
           if (!review.sentiment && review.review_text) {
             try {
               console.log(`Analyzing sentiment for review ${i}`);
+              
+              // Update UI to show analyzing state
+              setReviews(prevReviews => {
+                const updatedReviews = [...prevReviews];
+                updatedReviews[i] = {
+                  ...updatedReviews[i],
+                  isAnalyzing: true
+                };
+                return updatedReviews;
+              });
+              
               const result = await analyzeSentiment(review.review_text);
+              
               setReviews(prevReviews => {
                 const updatedReviews = [...prevReviews];
                 updatedReviews[i] = {

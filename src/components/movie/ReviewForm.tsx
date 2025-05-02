@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,6 +15,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { detectSpam } from '@/services/review/spamDetection';
 import SentimentTag from './SentimentTag';
+import { analyzeSentiment } from '@/services/sentimentAnalysis';
 
 export interface ReviewData {
   stars: number;
@@ -31,7 +33,50 @@ const ReviewForm = ({ movieId, onSubmit, isSubmitting }: ReviewFormProps) => {
   const [reviewText, setReviewText] = useState('');
   const [hoveredStar, setHoveredStar] = useState(0);
   const [showAbusiveAlert, setShowAbusiveAlert] = useState(false);
+  const [liveAnalysis, setLiveAnalysis] = useState<{sentiment: 'positive' | 'negative' | 'neutral', confidence?: number} | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisTimeout, setAnalysisTimeout] = useState<NodeJS.Timeout | null>(null);
   const { user } = useAuth();
+  
+  // Live sentiment analysis effect
+  useEffect(() => {
+    if (reviewText.trim().length > 5) {
+      setIsAnalyzing(true);
+      
+      // Clear any existing timeout
+      if (analysisTimeout) {
+        clearTimeout(analysisTimeout);
+      }
+      
+      // Set a new timeout for sentiment analysis
+      const timeout = setTimeout(async () => {
+        try {
+          const result = await analyzeSentiment(reviewText);
+          setLiveAnalysis(result);
+        } catch (error) {
+          console.error('Error analyzing sentiment:', error);
+        } finally {
+          setIsAnalyzing(false);
+        }
+      }, 1000); // Delay analysis by 1 second after typing stops
+      
+      setAnalysisTimeout(timeout);
+    } else {
+      // Reset for very short text
+      setLiveAnalysis(null);
+      setIsAnalyzing(false);
+      if (analysisTimeout) {
+        clearTimeout(analysisTimeout);
+      }
+    }
+    
+    // Cleanup timeout on component unmount
+    return () => {
+      if (analysisTimeout) {
+        clearTimeout(analysisTimeout);
+      }
+    };
+  }, [reviewText]);
   
   const handleStarClick = (rating: number) => {
     setStars(rating);
@@ -63,6 +108,7 @@ const ReviewForm = ({ movieId, onSubmit, isSubmitting }: ReviewFormProps) => {
     
     setStars(0);
     setReviewText('');
+    setLiveAnalysis(null);
   };
   
   if (!user) {
@@ -81,7 +127,17 @@ const ReviewForm = ({ movieId, onSubmit, isSubmitting }: ReviewFormProps) => {
       <form onSubmit={handleSubmit}>
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-medium">Write a Review</h3>
-          <SentimentTag sentiment="neutral" className="border border-white/5" />
+          {isAnalyzing ? (
+            <SentimentTag sentiment="neutral" isAnalyzing={true} className="border border-white/5" />
+          ) : liveAnalysis ? (
+            <SentimentTag 
+              sentiment={liveAnalysis.sentiment} 
+              confidence={liveAnalysis.confidence} 
+              className="border border-white/5"
+            />
+          ) : (
+            <SentimentTag sentiment="neutral" className="border border-white/5" />
+          )}
         </div>
         
         <div className="mb-4">
