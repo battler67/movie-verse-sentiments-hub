@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { detectSpam } from '@/services/review/spamDetection';
 import SentimentTag from './SentimentTag';
-import { analyzeSentiment } from '@/services/sentimentAnalysis';
+import { analyzeSentiment, moderateReview } from '@/services/sentimentAnalysis';
 
 export interface ReviewData {
   stars: number;
@@ -33,6 +33,7 @@ const ReviewForm = ({ movieId, onSubmit, isSubmitting }: ReviewFormProps) => {
   const [reviewText, setReviewText] = useState('');
   const [hoveredStar, setHoveredStar] = useState(0);
   const [showAbusiveAlert, setShowAbusiveAlert] = useState(false);
+  const [showProfanityAlert, setShowProfanityAlert] = useState(false);
   const [liveAnalysis, setLiveAnalysis] = useState<{sentiment: 'positive' | 'negative' | 'neutral', confidence?: number} | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisTimeout, setAnalysisTimeout] = useState<NodeJS.Timeout | null>(null);
@@ -94,11 +95,19 @@ const ReviewForm = ({ movieId, onSubmit, isSubmitting }: ReviewFormProps) => {
     e.preventDefault();
     if (!stars || !reviewText.trim()) return;
 
+    // Check for spam/abusive content
     const spamCheck = await detectSpam(reviewText);
-    
     if (spamCheck.isAbusive) {
       setShowAbusiveAlert(true);
       return;
+    }
+    
+    // Check for profanity
+    const profanityCheck = await moderateReview(reviewText);
+    if (!profanityCheck.isClean) {
+      setShowProfanityAlert(true);
+      // We'll continue with submission but show a warning
+      // The submitReview function will use the cleaned text
     }
     
     await onSubmit({
@@ -189,6 +198,21 @@ const ReviewForm = ({ movieId, onSubmit, isSubmitting }: ReviewFormProps) => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>OK</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showProfanityAlert} onOpenChange={setShowProfanityAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Profanity Detected</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your review contains language that violates our community guidelines. 
+              We've automatically removed or modified inappropriate words.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Continue with Modified Review</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

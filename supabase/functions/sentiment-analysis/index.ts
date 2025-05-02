@@ -63,7 +63,7 @@ serve(async (req) => {
 
         // Convert confidence score to percentage
         const confidence = resultItem.score 
-          ? Math.round(resultItem.score * 100) 
+          ? parseFloat((resultItem.score * 100).toFixed(2)) 
           : 0;
         
         console.log(`Sentiment: ${sentiment}, Confidence: ${confidence}%`);
@@ -153,7 +153,7 @@ function performEnhancedSentimentAnalysis(text: string) {
   let baseConfidence = totalSentimentWords / totalWords;
   let sentimentDominance = Math.abs(positiveCount - negativeCount) / (positiveCount + negativeCount + 1); // +1 to avoid div by zero
   let confidence = Math.min(1, baseConfidence * 0.5 + sentimentDominance * 0.5); // weighted average
-  const confidencePercent = Math.round(confidence * 100);
+  const confidencePercent = parseFloat((confidence * 100).toFixed(2));
 
   console.log(`Enhanced sentiment analysis: ${sentiment}, Confidence: ${confidencePercent}%, Positive words: ${positiveCount}, Negative words: ${negativeCount}, Neutral words: ${neutralCount}`);
 
