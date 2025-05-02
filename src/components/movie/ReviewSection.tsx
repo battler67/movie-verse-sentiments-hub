@@ -18,37 +18,31 @@ interface ReviewSectionProps {
   movieId: string;
 }
 
-const trackConversion = () => {
-  if (window.gtag) {
-    window.gtag('event', 'ads_conversion_Sign_up_1', {});
-  }
-};
-
-// Sample test reviews
-const testReviews = [
-  { 
-    type: 'positive', 
-    text: 'This movie was absolutely amazing! The cinematography, acting, and storyline were all excellent. I would definitely recommend it to anyone who enjoys this genre.', 
-    stars: 5
-  },
-  { 
-    type: 'negative', 
-    text: 'Terrible movie with poor acting and a confusing plot. The special effects were underwhelming and the dialogue was cringeworthy. Would not recommend.', 
-    stars: 1
-  },
-  { 
-    type: 'neutral', 
-    text: 'This movie had some good moments, but overall it was just average. The acting was decent but the storyline could have been better developed.', 
-    stars: 3
-  }
-];
-
 const ReviewSection = ({ movieId }: ReviewSectionProps) => {
   const { user } = useAuth();
   const { handleSubmit, isSubmitting } = useReviewSubmission(movieId);
   const { reviews, setReviews, isLoading } = useReviewManagement(movieId);
   const { selectedSentiment, setSelectedSentiment, filteredReviews, resetFilter } = useReviewFilters(reviews);
   const { handleLikeReview, handleDislikeReview, isProcessing } = useReviewInteractions(movieId, setReviews);
+
+  // Sample test reviews
+  const testReviews = [
+    { 
+      type: 'positive', 
+      text: 'This movie was absolutely amazing! The cinematography, acting, and storyline were all excellent. I would definitely recommend it to anyone who enjoys this genre.', 
+      stars: 5
+    },
+    { 
+      type: 'negative', 
+      text: 'Terrible movie with poor acting and a confusing plot. The special effects were underwhelming and the dialogue was cringeworthy. Would not recommend.', 
+      stars: 1
+    },
+    { 
+      type: 'neutral', 
+      text: 'This movie had some good moments, but overall it was just average. The acting was decent but the storyline could have been better developed.', 
+      stars: 3
+    }
+  ];
 
   const submitTestReview = async (review: typeof testReviews[0]) => {
     if (!user) {
@@ -78,8 +72,6 @@ const ReviewSection = ({ movieId }: ReviewSectionProps) => {
     try {
       const success = await handleSubmit(reviewData.stars, reviewData.review_text);
       if (success) {
-        trackConversion();
-        
         const updatedReviews = await getMovieReviews(movieId);
         const newReviewWithAnalysis = updatedReviews.map((review, index) => {
           const isNewReview = !reviews.some(r => r.id === review.id);

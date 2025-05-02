@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { getMovieReviews } from '@/services/review/getReviews';
-import { analyzeSentiment, deduplicateReviews } from '@/services/sentimentAnalysis';
+import { analyzeSentiment } from '@/services/sentimentAnalysis';
 import { toast } from 'sonner';
 
 export const useReviewManagement = (movieId: string) => {
@@ -12,13 +12,7 @@ export const useReviewManagement = (movieId: string) => {
     const loadReviews = async () => {
       setIsLoading(true);
       try {
-        // First deduplicate reviews
-        const removedCount = await deduplicateReviews(movieId);
-        if (removedCount > 0) {
-          toast.info(`Cleaned up ${removedCount} duplicate ${removedCount === 1 ? 'review' : 'reviews'}`);
-        }
-        
-        // Then load the reviews
+        // Load the reviews
         const reviewData = await getMovieReviews(movieId);
         
         // Mark reviews as analyzing initially if they don't have sentiment

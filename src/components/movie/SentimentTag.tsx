@@ -34,13 +34,6 @@ const SentimentTag = ({ sentiment, confidence, isAnalyzing = false, className = 
     }
   };
 
-  const getConfidenceLabel = () => {
-    if (confidence === undefined || confidence === null) return '';
-    if (confidence >= 80) return 'High';
-    if (confidence >= 50) return 'Medium';
-    return 'Low';
-  };
-
   // Format confidence to 2 decimal places if available
   const formatConfidence = () => {
     if (confidence === undefined || confidence === null) return '';
@@ -60,7 +53,7 @@ const SentimentTag = ({ sentiment, confidence, isAnalyzing = false, className = 
           <span className="capitalize">{sentiment}</span>
           {confidence !== undefined && confidence > 0 && (
             <span className="ml-1 opacity-80">
-              ({getConfidenceLabel()} {formatConfidence()}%)
+              ({formatConfidence()}%)
             </span>
           )}
         </>

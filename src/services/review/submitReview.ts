@@ -1,7 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { analyzeSentiment, moderateReview, generateReviewSummary } from '@/services/sentimentAnalysis';
+import { analyzeSentiment } from '@/services/sentimentAnalysis';
 
 export interface ReviewData {
   movie_id: string;
@@ -26,24 +26,9 @@ export const submitReview = async (reviewData: ReviewData) => {
     if (profile && profile.username) {
       username = profile.username;
     }
-
-    // Moderate review content for profanity
-    const { isClean, cleanedText } = await moderateReview(reviewData.review_text);
-    if (!isClean) {
-      toast.warning('Your review contained inappropriate language and has been modified.');
-    }
     
-    // Use the cleaned text for all operations
-    const finalReviewText = isClean ? reviewData.review_text : cleanedText;
-
     // Analyze sentiment
-    const sentimentResult = await analyzeSentiment(finalReviewText);
-    
-    // Generate summary for longer reviews
-    let reviewSummary = '';
-    if (finalReviewText.length > 200) {
-      reviewSummary = await generateReviewSummary(finalReviewText);
-    }
+    const sentimentResult = await analyzeSentiment(reviewData.review_text);
 
     // Insert review
     const { error } = await supabase
@@ -51,8 +36,7 @@ export const submitReview = async (reviewData: ReviewData) => {
       .insert({
         movie_id: reviewData.movie_id,
         stars: reviewData.stars,
-        review_text: finalReviewText,
-        review_summary: reviewSummary,
+        review_text: reviewData.review_text,
         username: username,
         user_id: user.id,
         user_likes: 0,
@@ -62,23 +46,6 @@ export const submitReview = async (reviewData: ReviewData) => {
       });
 
     if (error) throw error;
-
-    // Also insert into the "previous user reviews of a particular movie" table
-    const { error: previousError } = await supabase
-      .from('previous user reviews of a particular movie')
-      .insert({
-        'movie id': parseInt(reviewData.movie_id),
-        'user id': user.id,
-        review: finalReviewText,
-        user_stars: reviewData.stars,
-        user_sentiment: sentimentResult.sentiment,
-        user_likes: 0,
-        user_dislikes: 0
-      });
-
-    if (previousError) {
-      console.error('Error inserting into previous reviews:', previousError);
-    }
 
     toast.success('Review submitted successfully!');
     return true;
