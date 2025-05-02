@@ -65,7 +65,7 @@ export const useReviewManagement = (movieId: string) => {
                 updatedReviews[i] = {
                   ...updatedReviews[i],
                   sentiment: 'neutral',
-                  confidence: 45,
+                  confidence: 0,
                   isAnalyzing: false
                 };
                 return updatedReviews;

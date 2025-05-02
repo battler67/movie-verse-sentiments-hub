@@ -41,6 +41,12 @@ const SentimentTag = ({ sentiment, confidence, isAnalyzing = false, className = 
     return 'Low';
   };
 
+  // Format confidence to 2 decimal places if available
+  const formatConfidence = () => {
+    if (confidence === undefined || confidence === null) return '';
+    return confidence.toFixed(2);
+  };
+
   return (
     <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs border ${getTagColor()} ${className}`}>
       {isAnalyzing ? (
@@ -54,7 +60,7 @@ const SentimentTag = ({ sentiment, confidence, isAnalyzing = false, className = 
           <span className="capitalize">{sentiment}</span>
           {confidence !== undefined && confidence > 0 && (
             <span className="ml-1 opacity-80">
-              ({getConfidenceLabel()} {confidence}%)
+              ({getConfidenceLabel()} {formatConfidence()}%)
             </span>
           )}
         </>

@@ -21,13 +21,13 @@ export const analyzeSentiment = async (text: string): Promise<SentimentAnalysis>
     
     return {
       sentiment: data.sentiment || 'neutral',
-      confidence: data.confidence || 50
+      confidence: data.confidence || 0
     };
   } catch (error) {
     console.error("Sentiment analysis error:", error);
     toast.error("Failed to analyze sentiment");
     // Default values if API fails
-    return { sentiment: 'neutral', confidence: 50 };
+    return { sentiment: 'neutral', confidence: 0 };
   }
 };
 

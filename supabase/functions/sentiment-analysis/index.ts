@@ -48,29 +48,33 @@ serve(async (req) => {
 
       // Process the response
       const data = await response.json();
-      const result = data[0];
       
-      // Normalize sentiment
-      let sentiment = 'neutral';
-      if (result && result.label) {
-        if (result.label.toLowerCase().includes('positive')) {
+      // Extract result from the API response format
+      if (data && data.result && data.result.length > 0) {
+        const resultItem = data.result[0];
+        
+        // Normalize sentiment
+        let sentiment = 'neutral';
+        if (resultItem.label === 'POSITIVE') {
           sentiment = 'positive';
-        } else if (result.label.toLowerCase().includes('negative')) {
+        } else if (resultItem.label === 'NEGATIVE') {
           sentiment = 'negative';
         }
-      }
 
-      // Convert confidence score to percentage
-      const confidence = result && typeof result.score === 'number' 
-        ? Math.round(result.score * 100)
-        : 50;
-      
-      console.log(`Sentiment: ${sentiment}, Confidence: ${confidence}%`);
-      
-      return new Response(
-        JSON.stringify({ sentiment, confidence }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+        // Convert confidence score to percentage
+        const confidence = resultItem.score 
+          ? Math.round(resultItem.score * 100) 
+          : 0;
+        
+        console.log(`Sentiment: ${sentiment}, Confidence: ${confidence}%`);
+        
+        return new Response(
+          JSON.stringify({ sentiment, confidence }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } else {
+        throw new Error("Invalid API response format");
+      }
     } catch (error) {
       console.error("Error calling BERT API:", error);
       // Fallback to enhanced sentiment analysis when external API fails
@@ -83,7 +87,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("Error in sentiment-analysis function:", error);
     return new Response(
-      JSON.stringify({ error: error.message, sentiment: 'neutral', confidence: 50 }),
+      JSON.stringify({ error: error.message, sentiment: 'neutral', confidence: 0 }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
