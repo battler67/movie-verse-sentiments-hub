@@ -1,3 +1,4 @@
+
 import { useAuth } from '@/contexts/AuthContext';
 import { useReviewSubmission } from '@/hooks/useReviewSubmission';
 import { useReviewFilters } from '@/hooks/useReviewFilters';
@@ -11,7 +12,7 @@ import ReviewList from './ReviewList';
 import ReviewSkeleton from './ReviewSkeleton';
 import ReviewHeader from './ReviewHeader';
 import { ReviewData } from '@/services/review/submitReview';
-import { Button } from 'flowbite-react';
+import { Button } from '@/components/ui/button';
 
 interface ReviewSectionProps {
   movieId: string;
