@@ -14,6 +14,7 @@ interface Review {
   isAnalyzing?: boolean;
   user_likes: number;
   user_dislikes: number;
+  language?: string;
 }
 
 interface ReviewListProps {
@@ -75,6 +76,7 @@ const ReviewList = ({ reviews, onLike, onDislike, isProcessing }: ReviewListProp
                 sentiment={review.sentiment}
                 confidence={review.confidence}
                 isAnalyzing={review.isAnalyzing}
+                language={review.language || 'en'}
               />
             </div>
             <div className="mt-4">
