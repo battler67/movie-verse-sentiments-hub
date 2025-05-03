@@ -2,7 +2,6 @@
 import { useState, useRef } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 export const useVoiceRecording = (onTranscriptionComplete: (text: string) => void) => {
   const [isRecording, setIsRecording] = useState(false);

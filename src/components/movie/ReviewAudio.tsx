@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Headphones } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTextToSpeech } from '@/hooks/useTextToSpeech';
@@ -12,7 +12,7 @@ interface ReviewAudioProps {
 
 const ReviewAudio: React.FC<ReviewAudioProps> = ({ text, language = 'en' }) => {
   const { isPlaying, speak } = useTextToSpeech();
-  const [showEmptyDialog, setShowEmptyDialog] = React.useState(false);
+  const [showEmptyDialog, setShowEmptyDialog] = useState(false);
 
   const handleTextToSpeech = () => {
     if (!text || text.trim() === '') {

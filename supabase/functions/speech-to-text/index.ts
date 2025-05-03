@@ -31,7 +31,7 @@ serve(async (req) => {
     // to simulate no speech detected
     const text = audio.length < 1000 
       ? "" 
-      : "I really enjoyed this movie! The acting was superb and the plot kept me engaged throughout.";
+      : "This is your transcribed speech. In a real implementation, this would be converted from your actual voice recording.";
 
     return new Response(
       JSON.stringify({ text: text }),
