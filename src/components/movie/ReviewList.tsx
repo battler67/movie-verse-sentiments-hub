@@ -1,7 +1,9 @@
 
 import { ThumbsUp, ThumbsDown } from 'lucide-react';
+import { useState } from 'react';
 import ReviewCard from './ReviewCard';
 import ReviewInteractions from './ReviewInteractions';
+import TranslationModal from './TranslationModal';
 
 interface Review {
   id: number;
@@ -25,9 +27,23 @@ interface ReviewListProps {
 }
 
 const ReviewList = ({ reviews, onLike, onDislike, isProcessing }: ReviewListProps) => {
+  // State for translation modal
+  const [isTranslationOpen, setIsTranslationOpen] = useState(false);
+  const [reviewToTranslate, setReviewToTranslate] = useState<Review | null>(null);
+  
   // Calculate total likes and dislikes
   const totalLikes = reviews.reduce((sum, review) => sum + (review.user_likes || 0), 0);
   const totalDislikes = reviews.reduce((sum, review) => sum + (review.user_dislikes || 0), 0);
+
+  const handleOpenTranslation = (review: Review) => {
+    setReviewToTranslate(review);
+    setIsTranslationOpen(true);
+  };
+
+  const handleCloseTranslation = () => {
+    setIsTranslationOpen(false);
+    setReviewToTranslate(null);
+  };
 
   if (reviews.length === 0) {
     return (
@@ -79,7 +95,7 @@ const ReviewList = ({ reviews, onLike, onDislike, isProcessing }: ReviewListProp
                 language={review.language || 'en'}
               />
             </div>
-            <div className="mt-4">
+            <div className="mt-4 flex justify-between items-center">
               <ReviewInteractions
                 reviewId={review.id}
                 likes={review.user_likes}
@@ -88,10 +104,25 @@ const ReviewList = ({ reviews, onLike, onDislike, isProcessing }: ReviewListProp
                 onDislike={onDislike}
                 isProcessing={isProcessing}
               />
+              <button
+                onClick={() => handleOpenTranslation(review)}
+                className="text-xs bg-movie-primary/20 hover:bg-movie-primary/30 text-movie-primary px-3 py-1 rounded transition-colors"
+              >
+                See Translation
+              </button>
             </div>
           </div>
         ))}
       </div>
+
+      {isTranslationOpen && reviewToTranslate && (
+        <TranslationModal
+          text={reviewToTranslate.review_text}
+          onClose={handleCloseTranslation}
+          onSelect={() => {}}
+          isReadOnly={true}
+        />
+      )}
     </div>
   );
 };

@@ -43,37 +43,60 @@ const ReviewCard = ({
       setIsPlaying(true);
       toast.loading("Generating speech...");
 
-      const { data, error } = await supabase.functions.invoke("text-to-speech", {
-        body: { 
-          text: comment,
-          language: language || 'en'
+      try {
+        const { data, error } = await supabase.functions.invoke("text-to-speech", {
+          body: { 
+            text: comment,
+            language: language || 'en'
+          }
+        });
+
+        if (error) throw error;
+
+        if (data && data.audioContent) {
+          const audioBlob = base64ToBlob(data.audioContent, 'audio/mp3');
+          const audioUrl = URL.createObjectURL(audioBlob);
+          
+          if (audio) {
+            audio.pause();
+            URL.revokeObjectURL(audio.src);
+          }
+
+          const newAudio = new Audio(audioUrl);
+          setAudio(newAudio);
+          
+          newAudio.onended = () => {
+            setIsPlaying(false);
+          };
+          
+          newAudio.play();
+          toast.dismiss();
+          toast.success("Playing review audio");
         }
-      });
-
-      if (error) throw error;
-
-      if (data && data.audioContent) {
-        const audioBlob = base64ToBlob(data.audioContent, 'audio/mp3');
-        const audioUrl = URL.createObjectURL(audioBlob);
+      } catch (error) {
+        console.error("Edge function error:", error);
         
-        if (audio) {
-          audio.pause();
-          URL.revokeObjectURL(audio.src);
+        // Fallback to browser's speech synthesis if edge function fails
+        if ('speechSynthesis' in window) {
+          const utterance = new SpeechSynthesisUtterance(comment);
+          utterance.lang = language || 'en';
+          
+          speechSynthesis.cancel(); // Cancel any ongoing speech
+          
+          utterance.onend = () => {
+            setIsPlaying(false);
+          };
+          
+          speechSynthesis.speak(utterance);
+          toast.dismiss();
+        } else {
+          throw new Error("Browser doesn't support speech synthesis");
         }
-
-        const newAudio = new Audio(audioUrl);
-        setAudio(newAudio);
-        
-        newAudio.onended = () => {
-          setIsPlaying(false);
-        };
-        
-        newAudio.play();
-        toast.dismiss();
       }
     } catch (error) {
       console.error("Text-to-speech error:", error);
       setIsPlaying(false);
+      toast.dismiss();
       toast.error("Failed to generate speech");
     }
   };
@@ -113,6 +136,7 @@ const ReviewCard = ({
               className="h-6 w-6" 
               onClick={handleTextToSpeech}
               title="Listen to this review"
+              aria-label="Listen to review"
             >
               <Headphones 
                 size={14} 

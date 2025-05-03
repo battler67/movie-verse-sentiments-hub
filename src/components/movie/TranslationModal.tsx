@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Dialog, 
@@ -21,6 +22,7 @@ interface TranslationModalProps {
   text: string;
   onClose: () => void;
   onSelect: (translatedText: string) => void;
+  isReadOnly?: boolean;
 }
 
 interface Language {
@@ -42,7 +44,7 @@ const LANGUAGES: Language[] = [
   { code: 'ru', name: 'Russian' }
 ];
 
-const TranslationModal = ({ text, onClose, onSelect }: TranslationModalProps) => {
+const TranslationModal = ({ text, onClose, onSelect, isReadOnly = false }: TranslationModalProps) => {
   const [isOpen, setIsOpen] = useState(true);
   const [targetLanguage, setTargetLanguage] = useState('es');
   const [translatedText, setTranslatedText] = useState('');
@@ -111,30 +113,81 @@ const TranslationModal = ({ text, onClose, onSelect }: TranslationModalProps) =>
 
     try {
       setIsPlaying(true);
+      toast.loading("Generating speech...");
       
-      // Here we would connect to a text-to-speech API for the specific language
-      // For now, let's create a simple audio simulation
-      const utterance = new SpeechSynthesisUtterance(translatedText);
-      utterance.lang = targetLanguage;
-      
-      // Check if the browser supports speech synthesis
-      if ('speechSynthesis' in window) {
-        speechSynthesis.cancel(); // Cancel any ongoing speech
+      try {
+        const { data, error } = await supabase.functions.invoke("text-to-speech", {
+          body: { 
+            text: translatedText || text,
+            language: targetLanguage
+          }
+        });
+
+        if (error) throw error;
+
+        if (data && data.audioContent) {
+          // Create audio from base64
+          const audioBlob = base64ToBlob(data.audioContent, 'audio/mp3');
+          const audioUrl = URL.createObjectURL(audioBlob);
+          
+          if (audio) {
+            audio.pause();
+            URL.revokeObjectURL(audio.src);
+          }
+
+          const newAudio = new Audio(audioUrl);
+          setAudio(newAudio);
+          
+          newAudio.onended = () => {
+            setIsPlaying(false);
+          };
+          
+          newAudio.play();
+          toast.dismiss();
+          toast.success("Playing audio");
+        }
+      } catch (error) {
+        console.error("Text-to-speech API error:", error);
         
-        utterance.onend = () => {
+        // Fallback to browser's speech synthesis
+        if ('speechSynthesis' in window) {
+          speechSynthesis.cancel(); // Cancel any ongoing speech
+          const utterance = new SpeechSynthesisUtterance(translatedText || text);
+          utterance.lang = targetLanguage;
+          
+          utterance.onend = () => {
+            setIsPlaying(false);
+          };
+          
+          speechSynthesis.speak(utterance);
+          toast.dismiss();
+        } else {
+          toast.error("Your browser doesn't support speech synthesis");
           setIsPlaying(false);
-        };
-        
-        speechSynthesis.speak(utterance);
-      } else {
-        toast.error("Your browser doesn't support speech synthesis");
-        setIsPlaying(false);
+        }
       }
     } catch (error) {
       console.error("Text-to-speech error:", error);
       setIsPlaying(false);
+      toast.dismiss();
       toast.error("Failed to generate speech");
     }
+  };
+
+  // Helper function to convert base64 to Blob
+  const base64ToBlob = (base64: string, mimeType: string) => {
+    const byteCharacters = atob(base64);
+    const byteArrays = [];
+    for (let i = 0; i < byteCharacters.length; i += 512) {
+      const slice = byteCharacters.slice(i, i + 512);
+      const byteNumbers = new Array(slice.length);
+      for (let j = 0; j < slice.length; j++) {
+        byteNumbers[j] = slice.charCodeAt(j);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      byteArrays.push(byteArray);
+    }
+    return new Blob(byteArrays, { type: mimeType });
   };
 
   return (
@@ -198,14 +251,16 @@ const TranslationModal = ({ text, onClose, onSelect }: TranslationModalProps) =>
         
         <DialogFooter className="flex space-x-2 justify-end">
           <Button variant="outline" onClick={handleClose}>
-            <X size={14} className="mr-1" /> Cancel
+            <X size={14} className="mr-1" /> Close
           </Button>
-          <Button 
-            onClick={handleUseTranslation}
-            disabled={isLoading || !translatedText}
-          >
-            <Check size={14} className="mr-1" /> Use Translation
-          </Button>
+          {!isReadOnly && (
+            <Button 
+              onClick={handleUseTranslation}
+              disabled={isLoading || !translatedText}
+            >
+              <Check size={14} className="mr-1" /> Use Translation
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

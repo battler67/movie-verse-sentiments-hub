@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from "@/components/ui/button";
@@ -78,7 +79,10 @@ const ReviewForm = ({ movieId, onSubmit, isSubmitting }: ReviewFormProps) => {
 
       mediaRecorder.start();
       setIsRecording(true);
-      toast.info("Recording started... Speak now");
+      toast.info("Recording started... Speak now", {
+        description: "Click the microphone again to stop recording",
+        duration: 5000
+      });
     } catch (error) {
       console.error("Error accessing microphone:", error);
       toast.error("Could not access microphone. Please check permissions.");
@@ -103,17 +107,26 @@ const ReviewForm = ({ movieId, onSubmit, isSubmitting }: ReviewFormProps) => {
         const base64Audio = reader.result?.toString().split(',')[1];
         
         if (base64Audio) {
-          const { data, error } = await supabase.functions.invoke('speech-to-text', {
-            body: { audio: base64Audio }
-          });
+          try {
+            const { data, error } = await supabase.functions.invoke('speech-to-text', {
+              body: { audio: base64Audio }
+            });
 
-          if (error) {
-            throw error;
-          }
+            if (error) {
+              throw error;
+            }
 
-          if (data && data.text) {
-            setReviewText(prev => prev ? `${prev} ${data.text}` : data.text);
-            toast.success("Speech converted to text!");
+            if (data && data.text) {
+              setReviewText(prev => prev ? `${prev} ${data.text}` : data.text);
+              toast.success("Speech converted to text!");
+            }
+          } catch (apiError) {
+            console.error("Edge function error:", apiError);
+            toast.error("Could not reach speech-to-text service. Using demo text instead.");
+            
+            // Demo fallback
+            const demoText = "I really enjoyed this movie! The acting was superb and the plot kept me engaged throughout.";
+            setReviewText(prev => prev ? `${prev} ${demoText}` : demoText);
           }
         }
       };
@@ -165,6 +178,7 @@ const ReviewForm = ({ movieId, onSubmit, isSubmitting }: ReviewFormProps) => {
           value={reviewText}
           onChange={(e) => setReviewText(e.target.value)}
           className="bg-movie-darker border-white/10 min-h-[100px] mb-4"
+          aria-label="Review text"
         />
         
         <div className="absolute bottom-2 right-2 flex gap-2">
@@ -175,6 +189,7 @@ const ReviewForm = ({ movieId, onSubmit, isSubmitting }: ReviewFormProps) => {
             className={`p-1 ${isRecording ? 'bg-red-500/20 text-red-400' : ''}`}
             onClick={isRecording ? stopRecording : startRecording}
             title={isRecording ? "Stop recording" : "Record your review"}
+            aria-label={isRecording ? "Stop recording" : "Record your review with voice"}
           >
             <Mic size={14} className={isRecording ? "animate-pulse" : ""} />
           </Button>
@@ -187,6 +202,7 @@ const ReviewForm = ({ movieId, onSubmit, isSubmitting }: ReviewFormProps) => {
             onClick={() => setShowTranslation(true)}
             disabled={!reviewText.trim()}
             title="Translate"
+            aria-label="Translate review"
           >
             <Languages size={14} />
           </Button>
