@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Dialog, 
@@ -17,6 +16,7 @@ import {
 } from '@/components/ui/select';
 import { Headphones, X, Check } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface TranslationModalProps {
   text: string;
