@@ -1,9 +1,8 @@
-
 import React, { useState, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Star, Mic, Translate } from 'lucide-react';
+import { Star, Mic, Languages } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import TranslationModal from './TranslationModal';
@@ -189,7 +188,7 @@ const ReviewForm = ({ movieId, onSubmit, isSubmitting }: ReviewFormProps) => {
             disabled={!reviewText.trim()}
             title="Translate"
           >
-            <Translate size={14} />
+            <Languages size={14} />
           </Button>
         </div>
       </div>
