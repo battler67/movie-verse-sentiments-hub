@@ -2,9 +2,11 @@
 import { useState, useRef } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 export const useVoiceRecording = (onTranscriptionComplete: (text: string) => void) => {
   const [isRecording, setIsRecording] = useState(false);
+  const [showSpeakDialog, setShowSpeakDialog] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<BlobPart[]>([]);
   
@@ -31,6 +33,7 @@ export const useVoiceRecording = (onTranscriptionComplete: (text: string) => voi
 
       mediaRecorder.start();
       setIsRecording(true);
+      setShowSpeakDialog(true); // Show the speak dialog
       toast.info("Recording started... Speak now", {
         description: "Click the microphone again to stop recording",
         duration: 5000
@@ -45,6 +48,7 @@ export const useVoiceRecording = (onTranscriptionComplete: (text: string) => voi
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
+      setShowSpeakDialog(false); // Hide the speak dialog
       toast.info("Processing speech...");
     }
   };
@@ -71,14 +75,13 @@ export const useVoiceRecording = (onTranscriptionComplete: (text: string) => voi
             if (data && data.text) {
               onTranscriptionComplete(data.text);
               toast.success("Speech converted to text!");
+            } else {
+              // If no text was returned, show a message about no speech detected
+              toast.error("No speech detected. Please try again.");
             }
           } catch (apiError) {
             console.error("Edge function error:", apiError);
-            toast.error("Could not reach speech-to-text service. Using demo text instead.");
-            
-            // Demo fallback
-            const demoText = "I really enjoyed this movie! The acting was superb and the plot kept me engaged throughout.";
-            onTranscriptionComplete(demoText);
+            toast.error("Could not process speech. Please try typing your review instead.");
           }
         }
       };
@@ -90,7 +93,9 @@ export const useVoiceRecording = (onTranscriptionComplete: (text: string) => voi
   
   return {
     isRecording,
+    showSpeakDialog,
     startRecording,
-    stopRecording
+    stopRecording,
+    setShowSpeakDialog
   };
 };

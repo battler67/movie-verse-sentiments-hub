@@ -1,3 +1,4 @@
+
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from "sonner";
 import Index from '@/pages/Index';
@@ -11,6 +12,7 @@ import Watchlist from '@/pages/Watchlist';
 import UserDashboard from '@/pages/UserDashboard';
 import LandingPage from '@/pages/LandingPage';
 import Profile from '@/pages/Profile';
+import Donate from '@/pages/Donate';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { WatchlistProvider } from '@/contexts/WatchlistContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -51,6 +53,7 @@ const AppRoutes = () => {
       <Route path="/movie/:id" element={<MovieDetail />} />
       <Route path="/about" element={<About />} />
       <Route path="/privacy" element={<PrivacyPolicy />} />
+      <Route path="/donate" element={<Donate />} />
       <Route path="/watchlist" element={<ProtectedRoute><Watchlist /></ProtectedRoute>} />
       <Route path="/dashboard" element={<ProtectedRoute><UserDashboard /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />

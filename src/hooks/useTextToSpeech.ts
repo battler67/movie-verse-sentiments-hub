@@ -8,6 +8,11 @@ export const useTextToSpeech = () => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const speak = async (text: string, language: string = 'en') => {
+    if (!text || text.trim() === '') {
+      toast.error("No text to read");
+      return;
+    }
+    
     if (isPlaying && audioRef.current) {
       audioRef.current.pause();
       setIsPlaying(false);
@@ -18,6 +23,7 @@ export const useTextToSpeech = () => {
       setIsPlaying(true);
       toast.loading("Generating speech...");
       
+      // Try using the edge function first
       try {
         const { data, error } = await supabase.functions.invoke("text-to-speech", {
           body: { 
@@ -54,6 +60,7 @@ export const useTextToSpeech = () => {
         
         // Fallback to browser's speech synthesis
         if ('speechSynthesis' in window) {
+          console.log("Using browser speech synthesis");
           speechSynthesis.cancel(); // Cancel any ongoing speech
           const utterance = new SpeechSynthesisUtterance(text);
           utterance.lang = language;
@@ -62,8 +69,15 @@ export const useTextToSpeech = () => {
             setIsPlaying(false);
           };
           
+          utterance.onerror = (e) => {
+            console.error("Speech synthesis error:", e);
+            setIsPlaying(false);
+            toast.error("Failed to play speech");
+          };
+          
           speechSynthesis.speak(utterance);
           toast.dismiss();
+          toast.success("Playing review");
         } else {
           toast.error("Your browser doesn't support speech synthesis");
           setIsPlaying(false);
@@ -81,6 +95,11 @@ export const useTextToSpeech = () => {
     if (audioRef.current) {
       audioRef.current.pause();
       setIsPlaying(false);
+    }
+    
+    // Also stop browser speech synthesis if active
+    if ('speechSynthesis' in window) {
+      speechSynthesis.cancel();
     }
   };
 

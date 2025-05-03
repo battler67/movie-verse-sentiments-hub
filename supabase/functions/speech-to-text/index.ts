@@ -25,12 +25,16 @@ serve(async (req) => {
     // Simulate API call with a 1-second delay
     await new Promise(resolve => setTimeout(resolve, 1000))
     
-    // Return a sample text response
+    // Return the transcribed text
     // In a real app, this would be the actual transcribed text from the STT service
-    const sampleText = "I really enjoyed this movie! The acting was superb and the plot kept me engaged throughout.";
+    // For this example, we return an empty string if the audio is too short (less than 1000 chars in base64)
+    // to simulate no speech detected
+    const text = audio.length < 1000 
+      ? "" 
+      : "I really enjoyed this movie! The acting was superb and the plot kept me engaged throughout.";
 
     return new Response(
-      JSON.stringify({ text: sampleText }),
+      JSON.stringify({ text: text }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
