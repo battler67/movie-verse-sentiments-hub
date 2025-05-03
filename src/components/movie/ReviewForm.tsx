@@ -25,7 +25,13 @@ const ReviewForm = ({ movieId, onSubmit, isSubmitting }: ReviewFormProps) => {
   const [showTranslation, setShowTranslation] = useState(false);
   const { user } = useAuth();
   
-  const { isRecording, startRecording, stopRecording } = useVoiceRecording((text) => {
+  const { 
+    isRecording, 
+    startRecording, 
+    stopRecording, 
+    showSpeakDialog,
+    setShowSpeakDialog
+  } = useVoiceRecording((text) => {
     setReviewText(prev => prev ? `${prev} ${text}` : text);
   });
   
@@ -34,6 +40,13 @@ const ReviewForm = ({ movieId, onSubmit, isSubmitting }: ReviewFormProps) => {
       stopRecording();
     } else {
       startRecording();
+    }
+  };
+
+  const handleCloseSpeakDialog = () => {
+    setShowSpeakDialog(false);
+    if (isRecording) {
+      stopRecording();
     }
   };
   
@@ -83,6 +96,8 @@ const ReviewForm = ({ movieId, onSubmit, isSubmitting }: ReviewFormProps) => {
           hasText={!!reviewText.trim()}
           onRecordToggle={handleToggleRecording}
           onTranslateClick={() => setShowTranslation(true)}
+          showSpeakDialog={showSpeakDialog}
+          onSpeakDialogClose={handleCloseSpeakDialog}
         />
       </div>
       
