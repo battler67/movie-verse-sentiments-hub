@@ -95,7 +95,14 @@ export const useTextToSpeech = () => {
           try {
             // This is a workaround to create a downloadable audio file
             // from the browser's speech synthesis
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            // Use proper type checking for AudioContext API
+            const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+            
+            if (!AudioContextClass) {
+              throw new Error("AudioContext not supported in this browser");
+            }
+            
+            const audioContext = new AudioContextClass();
             const source = audioContext.createBufferSource();
             const destination = audioContext.createMediaStreamDestination();
             source.connect(destination);
