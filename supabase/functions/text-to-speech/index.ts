@@ -22,9 +22,6 @@ serve(async (req) => {
     // For real production use, you would use a TTS service like Google TTS, Amazon Polly, or ElevenLabs
     // This is a simple implementation that returns an audio file for demonstration
     
-    // In this demo, we're using the browser's built-in speech synthesis
-    // The edge function just returns a status that the client can use to trigger the browser's speech synthesis
-    
     console.log(`Processing text-to-speech for language: ${language}, text: ${text.substring(0, 50)}...`);
     
     // Wait for 500ms to simulate processing

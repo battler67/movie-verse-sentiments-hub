@@ -2,6 +2,7 @@
 import { useState, useRef } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { LANGUAGES } from '@/components/translation/LanguageSelector';
 
 export const useTextToSpeech = () => {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -22,6 +23,9 @@ export const useTextToSpeech = () => {
     try {
       setIsPlaying(true);
       toast.loading("Generating speech...");
+      
+      // Find the language name for display in toast
+      const languageName = LANGUAGES.find(lang => lang.code === language)?.name || language;
       
       // Try using the edge function first
       try {
@@ -53,7 +57,7 @@ export const useTextToSpeech = () => {
           
           newAudio.play();
           toast.dismiss();
-          toast.success("Playing audio");
+          toast.success(`Playing in ${languageName}`);
         }
       } catch (error) {
         console.error("Text-to-speech API error:", error);
@@ -64,6 +68,13 @@ export const useTextToSpeech = () => {
           speechSynthesis.cancel(); // Cancel any ongoing speech
           const utterance = new SpeechSynthesisUtterance(text);
           utterance.lang = language;
+          
+          // Try to find a matching voice for the language
+          const voices = speechSynthesis.getVoices();
+          const matchingVoice = voices.find(voice => voice.lang.startsWith(language));
+          if (matchingVoice) {
+            utterance.voice = matchingVoice;
+          }
           
           utterance.onend = () => {
             setIsPlaying(false);
@@ -77,7 +88,7 @@ export const useTextToSpeech = () => {
           
           speechSynthesis.speak(utterance);
           toast.dismiss();
-          toast.success("Playing review");
+          toast.success(`Playing in ${languageName}`);
         } else {
           toast.error("Your browser doesn't support speech synthesis");
           setIsPlaying(false);

@@ -2,6 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Film, Github, Twitter } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const Footer = () => {
   return (
@@ -28,13 +29,18 @@ const Footer = () => {
             <Link to="/privacy" className="text-sm text-white/60 hover:text-white">
               Privacy Policy
             </Link>
-            {/* Add dashboard link */}
             <Link to="/dashboard" className="text-sm text-white/60 hover:text-white">
               My Dashboard
             </Link>
           </div>
           
           <div className="flex items-center space-x-4">
+            <Button 
+              asChild
+              className="bg-movie-primary hover:bg-movie-primary/90 text-white font-medium px-6"
+            >
+              <Link to="/donate">Donate Us</Link>
+            </Button>
             <a
               href="https://github.com"
               target="_blank"
