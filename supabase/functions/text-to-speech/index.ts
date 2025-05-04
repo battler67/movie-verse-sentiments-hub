@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const { text, language = 'en' } = await req.json()
+    const { text, language = 'en-US' } = await req.json()
 
     if (!text) {
       throw new Error('Text is required')
@@ -27,8 +27,32 @@ serve(async (req) => {
     // Wait for 500ms to simulate processing
     await new Promise(resolve => setTimeout(resolve, 500));
     
-    // Return a language-specific demo audio content - in real implementation this would be actual 
-    // audio content generated from a TTS service in the specified language
+    // In a production environment with an API key, you would use a real TTS service:
+    // Example with OpenAI's TTS API (commented out as it requires an API key):
+    /*
+    const openaiResponse = await fetch('https://api.openai.com/v1/audio/speech', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'tts-1',
+        input: text,
+        voice: 'alloy',
+        response_format: 'mp3',
+      }),
+    });
+
+    if (!openaiResponse.ok) {
+      throw new Error('Failed to generate speech from OpenAI');
+    }
+
+    const arrayBuffer = await openaiResponse.arrayBuffer();
+    const base64Audio = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+    */
+    
+    // For now, return a minimal valid MP3 file as a placeholder
     return new Response(
       JSON.stringify({ 
         audioContent: getLanguageSpecificAudioContent(language),

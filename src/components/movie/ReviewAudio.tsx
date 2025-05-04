@@ -1,10 +1,9 @@
 
-import React, { useState } from 'react';
-import { Headphones, Download, Loader2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Headphones, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useTextToSpeech } from '@/hooks/useTextToSpeech';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import LanguageSelector, { LANGUAGES } from '@/components/translation/LanguageSelector';
+import LanguageSelector from '@/components/translation/LanguageSelector';
 import { toast } from 'sonner';
 
 interface ReviewAudioProps {
@@ -12,12 +11,22 @@ interface ReviewAudioProps {
   language?: string;
 }
 
-const ReviewAudio: React.FC<ReviewAudioProps> = ({ text, language = 'en' }) => {
-  const { isPlaying, speak, stopSpeaking, audioUrl, isGenerating } = useTextToSpeech();
+const ReviewAudio: React.FC<ReviewAudioProps> = ({ text, language = 'en-US' }) => {
+  const [isPlaying, setIsPlaying] = useState(false);
   const [showEmptyDialog, setShowEmptyDialog] = useState(false);
   const [showLanguageDialog, setShowLanguageDialog] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState(language);
-  const [audioGenerated, setAudioGenerated] = useState(false);
+  const [currentUtterance, setCurrentUtterance] = useState<SpeechSynthesisUtterance | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  // Clean up when component unmounts
+  useEffect(() => {
+    return () => {
+      if (window.speechSynthesis && isPlaying) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, [isPlaying]);
 
   const handleTextToSpeech = () => {
     if (!text || text.trim() === '') {
@@ -33,54 +42,75 @@ const ReviewAudio: React.FC<ReviewAudioProps> = ({ text, language = 'en' }) => {
     setShowLanguageDialog(true);
   };
 
-  const handleSpeakInLanguage = async () => {
-    await speak(text, selectedLanguage);
-    setAudioGenerated(true);
-    setShowLanguageDialog(false);
+  const stopSpeaking = () => {
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+      setIsPlaying(false);
+    }
+    
+    if (currentUtterance) {
+      setCurrentUtterance(null);
+    }
   };
 
-  const handleDownloadAudio = () => {
-    if (!audioUrl) {
-      toast.error("No audio generated yet");
+  const handleSpeakInLanguage = () => {
+    if (!window.speechSynthesis) {
+      toast.error("Your browser doesn't support speech synthesis");
       return;
     }
 
+    // Stop any current speech
+    stopSpeaking();
+    
     try {
-      // Create a temporary anchor element for downloading
-      const downloadLink = document.createElement('a');
-      downloadLink.href = audioUrl;
+      setIsGenerating(true);
       
-      // Find language name for the filename
-      const languageName = LANGUAGES.find(lang => lang.code === selectedLanguage)?.name || 'audio';
+      // Create a new utterance
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = selectedLanguage;
       
-      // Set the download attribute with a meaningful filename
-      downloadLink.download = `review-${languageName.toLowerCase()}.mp3`;
+      // Try to find a matching voice for the language
+      const voices = window.speechSynthesis.getVoices();
+      const exactVoiceMatch = voices.find(voice => voice.lang === selectedLanguage);
+      const languageMatch = voices.find(voice => voice.lang.startsWith(selectedLanguage.split('-')[0]));
       
-      // Append to the document body
-      document.body.appendChild(downloadLink);
+      // Use exact match, language match, or default voice
+      if (exactVoiceMatch) {
+        utterance.voice = exactVoiceMatch;
+      } else if (languageMatch) {
+        utterance.voice = languageMatch;
+      }
       
-      // Programmatically click the link to trigger download
-      downloadLink.click();
+      // Handle events
+      utterance.onstart = () => {
+        setIsPlaying(true);
+        setIsGenerating(false);
+        toast.success(`Playing in ${utterance.voice?.name || selectedLanguage}`);
+      };
       
-      // Clean up
-      document.body.removeChild(downloadLink);
+      utterance.onend = () => {
+        setIsPlaying(false);
+      };
       
-      toast.success(`Downloading audio in ${languageName}`);
+      utterance.onerror = (event) => {
+        console.error("Speech synthesis error:", event);
+        setIsPlaying(false);
+        setIsGenerating(false);
+        toast.error("Failed to play speech");
+      };
+      
+      // Start speaking
+      setCurrentUtterance(utterance);
+      window.speechSynthesis.speak(utterance);
+      
+      // Close the language selection dialog
+      setShowLanguageDialog(false);
+      
     } catch (error) {
-      console.error("Download error:", error);
-      toast.error("Failed to download audio file");
+      console.error("Text-to-speech error:", error);
+      setIsGenerating(false);
+      toast.error("Failed to generate speech");
     }
-  };
-
-  const checkAudioPlayability = async (url: string): Promise<boolean> => {
-    return new Promise((resolve) => {
-      const audio = new Audio(url);
-      audio.oncanplaythrough = () => resolve(true);
-      audio.onerror = () => resolve(false);
-      // Set a timeout in case the audio never loads
-      setTimeout(() => resolve(false), 3000);
-      audio.load();
-    });
   };
 
   return (
@@ -131,17 +161,9 @@ const ReviewAudio: React.FC<ReviewAudioProps> = ({ text, language = 'en' }) => {
             <LanguageSelector 
               value={selectedLanguage}
               onChange={setSelectedLanguage}
+              speechSynthesisMode={true}
             />
-            <div className="flex justify-between pt-2">
-              <Button
-                variant="outline"
-                onClick={handleDownloadAudio}
-                disabled={!audioUrl || isGenerating || !audioGenerated}
-                className="flex items-center gap-1"
-              >
-                <Download size={14} />
-                Download Audio
-              </Button>
+            <div className="flex justify-end pt-2">
               <Button 
                 onClick={handleSpeakInLanguage}
                 disabled={isGenerating}
