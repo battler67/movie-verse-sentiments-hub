@@ -56,12 +56,12 @@ serve(async (req) => {
 
     console.log("Received audio data, processing speech to text...");
     
-    // In a production environment, you would use a speech-to-text service
+    // In a production environment, you would use a speech-to-text service like OpenAI Whisper API
     // For now, we'll simulate processing and return a transcription
     
     // Wait for a moment to simulate processing
     await new Promise(resolve => setTimeout(resolve, 800));
-
+    
     // For real implementation, you would send audio to a service like OpenAI Whisper
     // Currently we just return a mock response for testing
     

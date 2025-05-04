@@ -26,6 +26,14 @@ export const useVoiceRecording = (onTranscriptionComplete: (text: string) => voi
   
   const startRecording = async () => {
     try {
+      // Try using the Web Speech API for direct transcription first
+      if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        // Use Web Speech API directly if available
+        useWebSpeechAPI(onTranscriptionComplete);
+        return;
+      }
+      
+      // Fallback to MediaRecorder if Web Speech API isn't available
       // Request microphone access
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
@@ -59,6 +67,72 @@ export const useVoiceRecording = (onTranscriptionComplete: (text: string) => voi
     } catch (error) {
       console.error("Error accessing microphone:", error);
       toast.error("Could not access microphone. Please check permissions.");
+    }
+  };
+
+  const useWebSpeechAPI = (callback: (text: string) => void) => {
+    const SpeechRecognition = (window as any).SpeechRecognition || 
+                            (window as any).webkitSpeechRecognition;
+    
+    if (!SpeechRecognition) {
+      toast.error("Speech recognition not supported in this browser");
+      return;
+    }
+    
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'en-US'; // Set language to English
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      
+      setIsRecording(true);
+      setShowSpeakDialog(true);
+      toast.info("Listening... Speak now", {
+        description: "The browser will automatically detect when you stop speaking",
+        duration: 5000
+      });
+      
+      recognition.onstart = () => {
+        setIsProcessing(false);
+      };
+      
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        callback(transcript);
+        setIsRecording(false);
+        setShowSpeakDialog(false);
+        toast.success("Speech converted to text!");
+      };
+      
+      recognition.onerror = (event: any) => {
+        console.error("Speech recognition error", event.error);
+        setIsRecording(false);
+        setShowSpeakDialog(false);
+        toast.error(`Error: ${event.error}`);
+      };
+      
+      recognition.onend = () => {
+        setIsRecording(false);
+        setShowSpeakDialog(false);
+      };
+      
+      recognition.start();
+      
+      // Add a timeout in case the recognition gets stuck
+      setTimeout(() => {
+        if (setIsRecording) {
+          try {
+            recognition.stop();
+          } catch (e) {
+            // Ignore errors on stop
+          }
+        }
+      }, 10000);
+    } catch (error) {
+      console.error("Error using Web Speech API:", error);
+      toast.error("Failed to start speech recognition");
+      setIsRecording(false);
+      setShowSpeakDialog(false);
     }
   };
 

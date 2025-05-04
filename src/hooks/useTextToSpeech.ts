@@ -146,17 +146,15 @@ export const useTextToSpeech = () => {
       try {
         // This is a workaround to create a downloadable audio file
         // from the browser's speech synthesis
-        // Use proper type checking for AudioContext API
         // Safely check for AudioContext with proper typing
-        const AudioContextClass = window.AudioContext || 
-          // TypeScript doesn't know about webkitAudioContext, so we use 'any'
-          (window as any).webkitAudioContext as typeof AudioContext;
-        
-        if (!AudioContextClass) {
+        const audioContext = new (window.AudioContext || 
+          // Use a type assertion for webkitAudioContext
+          (window as any).webkitAudioContext as typeof AudioContext)();
+          
+        if (!audioContext) {
           throw new Error("AudioContext not supported in this browser");
         }
         
-        const audioContext = new AudioContextClass();
         const source = audioContext.createBufferSource();
         const destination = audioContext.createMediaStreamDestination();
         source.connect(destination);

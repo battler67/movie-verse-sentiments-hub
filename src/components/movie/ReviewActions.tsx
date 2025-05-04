@@ -68,13 +68,16 @@ const ReviewActions: React.FC<ReviewActionsProps> = ({
           </DialogHeader>
           <div className="py-4">
             <p className="text-center text-white/80">
-              Please speak your review now. Click the microphone button again when you're done.
+              Please speak your review in English. Your speech will be automatically transcribed.
             </p>
             <div className="mt-4 flex justify-center">
               <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center">
                 <Mic size={32} className="text-red-500 animate-pulse" />
               </div>
             </div>
+            <p className="mt-4 text-center text-xs text-white/60">
+              Powered by Web Speech API. For best results, speak clearly in English.
+            </p>
           </div>
         </DialogContent>
       </Dialog>

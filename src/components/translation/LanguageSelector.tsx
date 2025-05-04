@@ -20,11 +20,7 @@ export const LANGUAGES: Language[] = [
   { code: 'de', name: 'German' },
   { code: 'it', name: 'Italian' },
   { code: 'zh', name: 'Chinese' },
-  { code: 'ja', name: 'Japanese' },
-  { code: 'ko', name: 'Korean' },
-  { code: 'ar', name: 'Arabic' },
-  { code: 'hi', name: 'Hindi' },
-  { code: 'ru', name: 'Russian' }
+  { code: 'ja', name: 'Japanese' }
 ];
 
 interface LanguageSelectorProps {
