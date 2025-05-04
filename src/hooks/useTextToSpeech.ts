@@ -6,6 +6,8 @@ import { LANGUAGES } from '@/components/translation/LanguageSelector';
 
 export const useTextToSpeech = () => {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const speak = async (text: string, language: string = 'en') => {
@@ -21,7 +23,8 @@ export const useTextToSpeech = () => {
     }
 
     try {
-      setIsPlaying(true);
+      setIsGenerating(true);
+      setIsPlaying(false);
       toast.loading("Generating speech...");
       
       // Find the language name for display in toast
@@ -42,6 +45,7 @@ export const useTextToSpeech = () => {
           // Create audio from base64
           const audioBlob = base64ToBlob(data.audioContent, 'audio/mp3');
           const audioUrl = URL.createObjectURL(audioBlob);
+          setAudioUrl(audioUrl);
           
           if (audioRef.current) {
             audioRef.current.pause();
@@ -58,6 +62,7 @@ export const useTextToSpeech = () => {
           newAudio.play();
           toast.dismiss();
           toast.success(`Playing in ${languageName}`);
+          setIsPlaying(true);
         }
       } catch (error) {
         console.error("Text-to-speech API error:", error);
@@ -86,19 +91,58 @@ export const useTextToSpeech = () => {
             toast.error("Failed to play speech");
           };
           
-          speechSynthesis.speak(utterance);
-          toast.dismiss();
-          toast.success(`Playing in ${languageName}`);
+          // Create downloadable audio from browser synthesis (if possible)
+          try {
+            // This is a workaround to create a downloadable audio file
+            // from the browser's speech synthesis
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const source = audioContext.createBufferSource();
+            const destination = audioContext.createMediaStreamDestination();
+            source.connect(destination);
+            
+            const mediaRecorder = new MediaRecorder(destination.stream);
+            const chunks: BlobPart[] = [];
+            
+            mediaRecorder.ondataavailable = (e) => {
+              chunks.push(e.data);
+            };
+            
+            mediaRecorder.onstop = () => {
+              const blob = new Blob(chunks, { type: 'audio/mp3' });
+              const url = URL.createObjectURL(blob);
+              setAudioUrl(url);
+            };
+            
+            mediaRecorder.start();
+            speechSynthesis.speak(utterance);
+            
+            // Stop recording after utterance ends
+            utterance.onend = () => {
+              mediaRecorder.stop();
+              setIsPlaying(false);
+            };
+            
+            setIsPlaying(true);
+            toast.dismiss();
+            toast.success(`Playing in ${languageName}`);
+          } catch (recordError) {
+            // Fallback if recording doesn't work
+            console.error("Failed to record speech:", recordError);
+            speechSynthesis.speak(utterance);
+            setIsPlaying(true);
+            toast.dismiss();
+            toast.success(`Playing in ${languageName} (download unavailable)`);
+          }
         } else {
           toast.error("Your browser doesn't support speech synthesis");
-          setIsPlaying(false);
         }
       }
     } catch (error) {
       console.error("Text-to-speech error:", error);
-      setIsPlaying(false);
       toast.dismiss();
       toast.error("Failed to generate speech");
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -130,5 +174,5 @@ export const useTextToSpeech = () => {
     return new Blob(byteArrays, { type: mimeType });
   };
 
-  return { isPlaying, speak, stopSpeaking };
+  return { isPlaying, isGenerating, speak, stopSpeaking, audioUrl };
 };

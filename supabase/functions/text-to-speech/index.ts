@@ -18,7 +18,7 @@ serve(async (req) => {
     if (!text) {
       throw new Error('Text is required')
     }
-
+    
     // For real production use, you would use a TTS service like Google TTS, Amazon Polly, or ElevenLabs
     // This is a simple implementation that returns an audio file for demonstration
     

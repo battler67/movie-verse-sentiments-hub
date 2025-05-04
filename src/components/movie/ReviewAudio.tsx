@@ -1,10 +1,11 @@
 
 import React, { useState } from 'react';
-import { Headphones } from 'lucide-react';
+import { Headphones, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTextToSpeech } from '@/hooks/useTextToSpeech';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import LanguageSelector, { LANGUAGES } from '@/components/translation/LanguageSelector';
+import { toast } from 'sonner';
 
 interface ReviewAudioProps {
   text: string;
@@ -12,7 +13,7 @@ interface ReviewAudioProps {
 }
 
 const ReviewAudio: React.FC<ReviewAudioProps> = ({ text, language = 'en' }) => {
-  const { isPlaying, speak } = useTextToSpeech();
+  const { isPlaying, speak, stopSpeaking, audioUrl, isGenerating } = useTextToSpeech();
   const [showEmptyDialog, setShowEmptyDialog] = useState(false);
   const [showLanguageDialog, setShowLanguageDialog] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState(language);
@@ -29,6 +30,34 @@ const ReviewAudio: React.FC<ReviewAudioProps> = ({ text, language = 'en' }) => {
   const handleSpeakInLanguage = () => {
     speak(text, selectedLanguage);
     setShowLanguageDialog(false);
+  };
+
+  const handleDownloadAudio = () => {
+    if (!audioUrl) {
+      toast.error("No audio generated yet");
+      return;
+    }
+
+    // Create a temporary anchor element for downloading
+    const downloadLink = document.createElement('a');
+    downloadLink.href = audioUrl;
+    
+    // Find language name for the filename
+    const languageName = LANGUAGES.find(lang => lang.code === selectedLanguage)?.name || 'audio';
+    
+    // Set the download attribute with a meaningful filename
+    downloadLink.download = `review-${languageName.toLowerCase()}.mp3`;
+    
+    // Append to the document body
+    document.body.appendChild(downloadLink);
+    
+    // Programmatically click the link to trigger download
+    downloadLink.click();
+    
+    // Clean up
+    document.body.removeChild(downloadLink);
+    
+    toast.success(`Downloading audio in ${languageName}`);
   };
 
   return (
@@ -75,12 +104,22 @@ const ReviewAudio: React.FC<ReviewAudioProps> = ({ text, language = 'en' }) => {
               value={selectedLanguage}
               onChange={setSelectedLanguage}
             />
-            <div className="flex justify-end pt-2">
+            <div className="flex justify-between pt-2">
+              <Button
+                variant="outline"
+                onClick={handleDownloadAudio}
+                disabled={!audioUrl || isGenerating}
+                className="flex items-center gap-1"
+              >
+                <Download size={14} />
+                Download Audio
+              </Button>
               <Button 
                 onClick={handleSpeakInLanguage}
+                disabled={isGenerating}
                 className="bg-movie-primary hover:bg-movie-primary/90"
               >
-                Listen
+                {isGenerating ? 'Generating...' : 'Listen'}
               </Button>
             </div>
           </div>

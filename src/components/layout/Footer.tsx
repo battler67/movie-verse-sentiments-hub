@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Film, Github, Twitter } from 'lucide-react';
+import { Film, Github, Twitter, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const Footer = () => {
@@ -37,9 +37,12 @@ const Footer = () => {
           <div className="flex items-center space-x-4">
             <Button 
               asChild
-              className="bg-movie-primary hover:bg-movie-primary/90 text-white font-medium px-6"
+              className="bg-movie-primary hover:bg-movie-primary/90 text-white font-medium px-6 flex items-center gap-2 animate-pulse"
             >
-              <Link to="/donate">Donate Us</Link>
+              <Link to="/donate">
+                <Heart size={16} className="text-white fill-white" />
+                Donate Us
+              </Link>
             </Button>
             <a
               href="https://github.com"
