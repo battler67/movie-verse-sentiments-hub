@@ -1,17 +1,35 @@
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
 export const useVoiceRecording = (onTranscriptionComplete: (text: string) => void) => {
   const [isRecording, setIsRecording] = useState(false);
   const [showSpeakDialog, setShowSpeakDialog] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const audioChunksRef = useRef<BlobPart[]>([]);
+  
+  // Clean up media resources when component unmounts
+  useEffect(() => {
+    return () => {
+      if (mediaRecorderRef.current && isRecording) {
+        mediaRecorderRef.current.stop();
+      }
+      
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [isRecording]);
   
   const startRecording = async () => {
     try {
+      // Request microphone access
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+      
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
@@ -28,6 +46,7 @@ export const useVoiceRecording = (onTranscriptionComplete: (text: string) => voi
         
         // Stop all tracks to turn off the microphone
         stream.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
       };
 
       mediaRecorder.start();
@@ -45,6 +64,7 @@ export const useVoiceRecording = (onTranscriptionComplete: (text: string) => voi
 
   const stopRecording = () => {
     if (mediaRecorderRef.current && isRecording) {
+      setIsProcessing(true);
       mediaRecorderRef.current.stop();
       setIsRecording(false);
       setShowSpeakDialog(false); // Hide the speak dialog
@@ -59,7 +79,15 @@ export const useVoiceRecording = (onTranscriptionComplete: (text: string) => voi
       reader.readAsDataURL(audioBlob);
       
       reader.onloadend = async () => {
-        const base64Audio = reader.result?.toString().split(',')[1];
+        const base64Data = reader.result?.toString();
+        if (!base64Data) {
+          toast.error("Failed to process audio data");
+          setIsProcessing(false);
+          return;
+        }
+        
+        // Remove the data URL prefix (e.g., "data:audio/webm;base64,")
+        const base64Audio = base64Data.split(',')[1];
         
         if (base64Audio) {
           try {
@@ -83,15 +111,18 @@ export const useVoiceRecording = (onTranscriptionComplete: (text: string) => voi
             toast.error("Could not process speech. Please try typing your review instead.");
           }
         }
+        setIsProcessing(false);
       };
     } catch (error) {
       console.error("Error processing speech:", error);
       toast.error("Failed to convert speech to text");
+      setIsProcessing(false);
     }
   };
   
   return {
     isRecording,
+    isProcessing,
     showSpeakDialog,
     startRecording,
     stopRecording,

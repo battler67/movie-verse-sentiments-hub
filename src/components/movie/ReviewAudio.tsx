@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Headphones, Download } from 'lucide-react';
+import { Headphones, Download, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTextToSpeech } from '@/hooks/useTextToSpeech';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -17,6 +17,7 @@ const ReviewAudio: React.FC<ReviewAudioProps> = ({ text, language = 'en' }) => {
   const [showEmptyDialog, setShowEmptyDialog] = useState(false);
   const [showLanguageDialog, setShowLanguageDialog] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState(language);
+  const [audioGenerated, setAudioGenerated] = useState(false);
 
   const handleTextToSpeech = () => {
     if (!text || text.trim() === '') {
@@ -24,11 +25,17 @@ const ReviewAudio: React.FC<ReviewAudioProps> = ({ text, language = 'en' }) => {
       return;
     }
     
+    if (isPlaying) {
+      stopSpeaking();
+      return;
+    }
+    
     setShowLanguageDialog(true);
   };
 
-  const handleSpeakInLanguage = () => {
-    speak(text, selectedLanguage);
+  const handleSpeakInLanguage = async () => {
+    await speak(text, selectedLanguage);
+    setAudioGenerated(true);
     setShowLanguageDialog(false);
   };
 
@@ -38,26 +45,42 @@ const ReviewAudio: React.FC<ReviewAudioProps> = ({ text, language = 'en' }) => {
       return;
     }
 
-    // Create a temporary anchor element for downloading
-    const downloadLink = document.createElement('a');
-    downloadLink.href = audioUrl;
-    
-    // Find language name for the filename
-    const languageName = LANGUAGES.find(lang => lang.code === selectedLanguage)?.name || 'audio';
-    
-    // Set the download attribute with a meaningful filename
-    downloadLink.download = `review-${languageName.toLowerCase()}.mp3`;
-    
-    // Append to the document body
-    document.body.appendChild(downloadLink);
-    
-    // Programmatically click the link to trigger download
-    downloadLink.click();
-    
-    // Clean up
-    document.body.removeChild(downloadLink);
-    
-    toast.success(`Downloading audio in ${languageName}`);
+    try {
+      // Create a temporary anchor element for downloading
+      const downloadLink = document.createElement('a');
+      downloadLink.href = audioUrl;
+      
+      // Find language name for the filename
+      const languageName = LANGUAGES.find(lang => lang.code === selectedLanguage)?.name || 'audio';
+      
+      // Set the download attribute with a meaningful filename
+      downloadLink.download = `review-${languageName.toLowerCase()}.mp3`;
+      
+      // Append to the document body
+      document.body.appendChild(downloadLink);
+      
+      // Programmatically click the link to trigger download
+      downloadLink.click();
+      
+      // Clean up
+      document.body.removeChild(downloadLink);
+      
+      toast.success(`Downloading audio in ${languageName}`);
+    } catch (error) {
+      console.error("Download error:", error);
+      toast.error("Failed to download audio file");
+    }
+  };
+
+  const checkAudioPlayability = async (url: string): Promise<boolean> => {
+    return new Promise((resolve) => {
+      const audio = new Audio(url);
+      audio.oncanplaythrough = () => resolve(true);
+      audio.onerror = () => resolve(false);
+      // Set a timeout in case the audio never loads
+      setTimeout(() => resolve(false), 3000);
+      audio.load();
+    });
   };
 
   return (
@@ -67,13 +90,18 @@ const ReviewAudio: React.FC<ReviewAudioProps> = ({ text, language = 'en' }) => {
         size="icon" 
         className="h-6 w-6" 
         onClick={handleTextToSpeech}
-        title="Listen to this review"
-        aria-label="Listen to review"
+        disabled={isGenerating}
+        title={isPlaying ? "Stop playback" : "Listen to this review"}
+        aria-label={isPlaying ? "Stop playback" : "Listen to review"}
       >
-        <Headphones 
-          size={14} 
-          className={isPlaying ? "text-movie-primary animate-pulse" : "text-white/70"} 
-        />
+        {isGenerating ? (
+          <Loader2 size={14} className="animate-spin text-movie-primary" />
+        ) : (
+          <Headphones 
+            size={14} 
+            className={isPlaying ? "text-movie-primary animate-pulse" : "text-white/70"} 
+          />
+        )}
       </Button>
 
       {/* Empty review dialog */}
@@ -108,7 +136,7 @@ const ReviewAudio: React.FC<ReviewAudioProps> = ({ text, language = 'en' }) => {
               <Button
                 variant="outline"
                 onClick={handleDownloadAudio}
-                disabled={!audioUrl || isGenerating}
+                disabled={!audioUrl || isGenerating || !audioGenerated}
                 className="flex items-center gap-1"
               >
                 <Download size={14} />
@@ -119,7 +147,16 @@ const ReviewAudio: React.FC<ReviewAudioProps> = ({ text, language = 'en' }) => {
                 disabled={isGenerating}
                 className="bg-movie-primary hover:bg-movie-primary/90"
               >
-                {isGenerating ? 'Generating...' : 'Listen'}
+                {isGenerating ? (
+                  <>
+                    <Loader2 size={14} className="mr-2 animate-spin" />
+                    Generating...
+                  </>
+                ) : isPlaying ? (
+                  'Stop'
+                ) : (
+                  'Listen'
+                )}
               </Button>
             </div>
           </div>

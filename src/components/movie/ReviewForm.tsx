@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -27,6 +27,7 @@ const ReviewForm = ({ movieId, onSubmit, isSubmitting }: ReviewFormProps) => {
   
   const { 
     isRecording, 
+    isProcessing,
     startRecording, 
     stopRecording, 
     showSpeakDialog,
@@ -34,6 +35,16 @@ const ReviewForm = ({ movieId, onSubmit, isSubmitting }: ReviewFormProps) => {
   } = useVoiceRecording((text) => {
     setReviewText(prev => prev ? `${prev} ${text}` : text);
   });
+
+  // Check browser support for audio recording
+  const [microphoneSupported, setMicrophoneSupported] = useState(true);
+  
+  useEffect(() => {
+    // Check if the browser supports getUserMedia
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setMicrophoneSupported(false);
+    }
+  }, []);
   
   const handleToggleRecording = () => {
     if (isRecording) {
@@ -75,7 +86,7 @@ const ReviewForm = ({ movieId, onSubmit, isSubmitting }: ReviewFormProps) => {
   }
   
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className="space-y-4">
       <h3 className="text-lg font-medium mb-4">Write a Review</h3>
       
       <div className="mb-4">
@@ -93,18 +104,20 @@ const ReviewForm = ({ movieId, onSubmit, isSubmitting }: ReviewFormProps) => {
         
         <ReviewActions 
           isRecording={isRecording}
+          isProcessing={isProcessing}
           hasText={!!reviewText.trim()}
           onRecordToggle={handleToggleRecording}
           onTranslateClick={() => setShowTranslation(true)}
           showSpeakDialog={showSpeakDialog}
           onSpeakDialogClose={handleCloseSpeakDialog}
+          microphoneSupported={microphoneSupported}
         />
       </div>
       
       <div className="flex justify-end">
         <Button 
           type="submit" 
-          disabled={isSubmitting || !stars || !reviewText.trim()} 
+          disabled={isSubmitting || !stars || !reviewText.trim() || isRecording || isProcessing} 
           className="bg-movie-primary hover:bg-movie-primary/90"
         >
           {isSubmitting ? 'Submitting...' : 'Submit Review'}
