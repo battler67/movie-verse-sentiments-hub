@@ -6,21 +6,21 @@ export const useVoiceRecording = (onTranscriptionComplete: (text: string) => voi
   const [isRecording, setIsRecording] = useState(false);
   const [showSpeakDialog, setShowSpeakDialog] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   // Start recording using Web Speech API
   const startRecording = async () => {
     try {
       // Check if Web Speech API is available
-      const SpeechRecognition = window.SpeechRecognition || 
-                               (window as any).webkitSpeechRecognition;
+      const SpeechRecognitionAPI = window.SpeechRecognition || 
+                               window.webkitSpeechRecognition;
       
-      if (!SpeechRecognition) {
+      if (!SpeechRecognitionAPI) {
         throw new Error("Speech recognition not supported in this browser");
       }
       
       // Initialize speech recognition
-      const recognition = new SpeechRecognition();
+      const recognition = new SpeechRecognitionAPI();
       recognitionRef.current = recognition;
       
       // Configure recognition
@@ -36,7 +36,7 @@ export const useVoiceRecording = (onTranscriptionComplete: (text: string) => voi
         setIsProcessing(false);
       };
       
-      recognition.onresult = (event: any) => {
+      recognition.onresult = (event: SpeechRecognitionEvent) => {
         const transcript = event.results[0][0].transcript;
         if (transcript && transcript.trim()) {
           onTranscriptionComplete(transcript);
@@ -46,7 +46,7 @@ export const useVoiceRecording = (onTranscriptionComplete: (text: string) => voi
         }
       };
       
-      recognition.onerror = (event: any) => {
+      recognition.onerror = (event: SpeechRecognitionError) => {
         console.error("Speech recognition error", event);
         toast.error(`Error: ${event.error === 'no-speech' ? 'No speech detected' : event.error}`);
       };
