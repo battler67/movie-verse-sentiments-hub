@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -6,16 +7,12 @@ import { Label } from '@/components/ui/label';
 import { Film, Mail, Lock, User, Github } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { useAuth } from '@/contexts/AuthContext';
 
 const SignUp = () => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showConfirmationDialog, setShowConfirmationDialog] = useState(false);
-  const { resendConfirmationEmail, sendCustomConfirmationEmail } = useAuth();
   const navigate = useNavigate();
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -40,6 +37,7 @@ const SignUp = () => {
           data: {
             username
           },
+          // Remove email verification requirement
           emailRedirectTo: 'https://movie-verse-sentiments-hub.lovable.app/'
         }
       });
@@ -48,20 +46,8 @@ const SignUp = () => {
         throw error;
       }
 
-      // After successful signup, send a custom confirmation email
-      if (data?.user) {
-        try {
-          // The token would be used by Supabase for verification
-          // For security, we generate a new token here instead of exposing the actual one
-          await sendCustomConfirmationEmail(email, data.user.id);
-        } catch (emailError) {
-          console.error("Error sending custom confirmation email:", emailError);
-          // Fall back to default email if custom one fails
-          await resendConfirmationEmail(email);
-        }
-      }
-      
-      setShowConfirmationDialog(true);
+      toast.success('Account created successfully! You can now log in.');
+      navigate('/login');
     } catch (error: any) {
       if (error.message.includes('already registered')) {
         toast.error('This email is already registered. Please try logging in instead.');
@@ -90,15 +76,6 @@ const SignUp = () => {
       toast.error(error.message || 'Error signing up with GitHub');
       setLoading(false);
     }
-  };
-
-  const handleResendEmail = async () => {
-    if (!email) {
-      toast.error('Please enter your email address');
-      return;
-    }
-    
-    await resendConfirmationEmail(email);
   };
 
   return (
@@ -207,31 +184,6 @@ const SignUp = () => {
           </Link>
         </p>
       </div>
-
-      <Dialog open={showConfirmationDialog} onOpenChange={setShowConfirmationDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Check your email</DialogTitle>
-            <DialogDescription>
-              We've sent a confirmation link to <span className="font-medium">{email}</span>. 
-              Click the link in the email to activate your account.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 mt-4">
-            <p className="text-sm text-muted-foreground">
-              If you don't see the email in your inbox, check your spam folder.
-            </p>
-            <div className="flex justify-between">
-              <Button variant="outline" onClick={() => navigate('/login')}>
-                Go to Login
-              </Button>
-              <Button onClick={() => sendCustomConfirmationEmail(email, 'resend')}>
-                Resend Email
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

@@ -9,17 +9,13 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signOut: () => Promise<void>;
-  resendConfirmationEmail: (email: string) => Promise<void>;
-  sendCustomConfirmationEmail: (email: string, token: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   session: null,
   loading: true,
-  signOut: async () => {},
-  resendConfirmationEmail: async () => {},
-  sendCustomConfirmationEmail: async () => {}
+  signOut: async () => {}
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -70,56 +66,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const resendConfirmationEmail = async (email: string) => {
-    try {
-      const { error } = await supabase.auth.resend({
-        type: 'signup',
-        email,
-      });
-      
-      if (error) {
-        throw error;
-      }
-      
-      toast.success('Confirmation email sent! Please check your inbox and spam folder.');
-    } catch (error: any) {
-      toast.error(error.message || 'Error sending confirmation email');
-    }
-  };
-
-  const sendCustomConfirmationEmail = async (email: string, token: string) => {
-    try {
-      // Create the confirmation URL that will be sent in the email
-      const baseUrl = window.location.origin;
-      const confirmationUrl = `${baseUrl}?confirmation_token=${token}&redirect_to=https://movie-verse-sentiments-hub.lovable.app/`;
-      
-      // Call our custom edge function to send a formatted email
-      const response = await supabase.functions.invoke('send-confirmation-email', {
-        body: {
-          email,
-          confirmationUrl
-        }
-      });
-      
-      if (response.error) {
-        throw new Error(response.error.message || 'Failed to send confirmation email');
-      }
-      
-      toast.success('Confirmation email sent! Please check your inbox and spam folder.');
-    } catch (error: any) {
-      console.error('Error sending custom confirmation email:', error);
-      toast.error(error.message || 'Error sending confirmation email');
-    }
-  };
-
   return (
     <AuthContext.Provider value={{ 
       user, 
       session, 
       loading, 
-      signOut, 
-      resendConfirmationEmail,
-      sendCustomConfirmationEmail 
+      signOut
     }}>
       {children}
     </AuthContext.Provider>
