@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Film, Mail, Lock, User, Github } from 'lucide-react';
+import { Film, Mail, Lock, User, Key, Shield, Github } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,6 +13,7 @@ const SignUp = () => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [specialKeyword, setSpecialKeyword] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -24,10 +25,24 @@ const SignUp = () => {
     }
   }, [user, navigate]);
 
+  // Generate a random special keyword
+  useEffect(() => {
+    const generateSpecialKeyword = () => {
+      const adjectives = ['happy', 'brave', 'clever', 'bold', 'calm', 'eager', 'gentle', 'kind'];
+      const nouns = ['tiger', 'eagle', 'dolphin', 'lion', 'wolf', 'bear', 'falcon', 'panther'];
+      const randomNum = Math.floor(Math.random() * 1000);
+      const adjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+      const noun = nouns[Math.floor(Math.random() * nouns.length)];
+      return `${adjective}${noun}${randomNum}`;
+    };
+
+    setSpecialKeyword(generateSpecialKeyword());
+  }, []);
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!username || !email || !password) {
+    if (!username || !email || !password || !specialKeyword) {
       toast.error('Please fill in all fields');
       return;
     }
@@ -69,7 +84,8 @@ const SignUp = () => {
           .insert({
             id: data.user.id,
             username,
-            email
+            email,
+            special_keyword: specialKeyword
           });
           
         if (profileError) {
@@ -175,6 +191,41 @@ const SignUp = () => {
                     required
                   />
                 </div>
+              </div>
+              
+              <div className="grid gap-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="specialKeyword">Special Keyword (Recovery)</Label>
+                  <button 
+                    type="button" 
+                    className="text-xs text-movie-primary hover:text-movie-primary/90"
+                    onClick={() => {
+                      const adjectives = ['happy', 'brave', 'clever', 'bold', 'calm', 'eager', 'gentle', 'kind'];
+                      const nouns = ['tiger', 'eagle', 'dolphin', 'lion', 'wolf', 'bear', 'falcon', 'panther'];
+                      const randomNum = Math.floor(Math.random() * 1000);
+                      const adjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+                      const noun = nouns[Math.floor(Math.random() * nouns.length)];
+                      setSpecialKeyword(`${adjective}${noun}${randomNum}`);
+                    }}
+                  >
+                    Generate new
+                  </button>
+                </div>
+                <div className="relative">
+                  <Key className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="specialKeyword"
+                    type="text"
+                    className="pl-10 bg-movie-dark border-white/10"
+                    value={specialKeyword}
+                    onChange={(e) => setSpecialKeyword(e.target.value)}
+                    required
+                  />
+                </div>
+                <p className="text-xs text-amber-500 flex items-center gap-1 mt-1">
+                  <Shield size={12} />
+                  Keep this keyword safe! You can use it to recover your account.
+                </p>
               </div>
               
               <Button 
