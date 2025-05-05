@@ -27,9 +27,10 @@ const Login = () => {
       
       if (confirmationToken) {
         try {
+          // Fix: Use 'signup' as the type which is a valid EmailOtpType
           const { error } = await supabase.auth.verifyOtp({
             token_hash: confirmationToken,
-            type: 'email_confirmation'
+            type: 'signup'
           });
           
           if (error) {
