@@ -14,6 +14,14 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { user } = useAuth();
+  
+  // Redirect if already logged in
+  React.useEffect(() => {
+    if (user) {
+      navigate('/', { replace: true });
+    }
+  }, [user, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,9 +41,6 @@ const Login = () => {
       if (error) {
         throw error;
       }
-      
-      toast.success('Signed in successfully!');
-      navigate('/', { replace: true });
     } catch (error: any) {
       toast.error(error.message || 'Error signing in');
     } finally {
@@ -49,7 +54,7 @@ const Login = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
-          redirectTo: `https://movie-verse-sentiments-hub.lovable.app/`
+          redirectTo: `${window.location.origin}/`
         }
       });
       

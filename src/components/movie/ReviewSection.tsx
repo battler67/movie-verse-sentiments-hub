@@ -1,4 +1,5 @@
 
+import { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useReviewSubmission } from '@/hooks/useReviewSubmission';
 import { useReviewFilters } from '@/hooks/useReviewFilters';
@@ -23,6 +24,36 @@ const ReviewSection = ({ movieId }: ReviewSectionProps) => {
   const { reviews, setReviews, isLoading } = useReviewManagement(movieId);
   const { selectedSentiment, setSelectedSentiment, filteredReviews, resetFilter } = useReviewFilters(reviews);
   const { handleLikeReview, handleDislikeReview, isProcessing } = useReviewInteractions(movieId, setReviews);
+  
+  // Call the deduplication function when the component mounts
+  useEffect(() => {
+    const deduplicateReviews = async () => {
+      try {
+        // Call the Supabase function to deduplicate reviews
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_FUNCTIONS_URL}/deduplicate-reviews`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+          },
+          body: JSON.stringify({ movieId })
+        });
+        
+        const result = await response.json();
+        
+        if (result.removed > 0) {
+          console.log(`Removed ${result.removed} duplicate reviews`);
+          // Refresh reviews after deduplication
+          const updatedReviews = await getMovieReviews(movieId);
+          setReviews(updatedReviews);
+        }
+      } catch (error) {
+        console.error("Error in deduplication:", error);
+      }
+    };
+    
+    deduplicateReviews();
+  }, [movieId, setReviews]);
 
   const onSubmitReview = async (reviewData: ReviewData) => {
     if (!user) {

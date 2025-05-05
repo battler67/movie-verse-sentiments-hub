@@ -38,9 +38,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           console.log('User signed out');
         } else if (event === 'USER_UPDATED') {
           console.log('User updated:', session?.user);
-        } else if (event === 'PASSWORD_RECOVERY') {
-          // Handle password recovery event
-          console.log('Password recovery requested');
         } else if (event === 'TOKEN_REFRESHED') {
           console.log('Token refreshed');
         }

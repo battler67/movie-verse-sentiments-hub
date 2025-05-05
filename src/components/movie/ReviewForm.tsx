@@ -7,6 +7,8 @@ import StarRating from './StarRating';
 import ReviewActions from './ReviewActions';
 import TranslationModal from './TranslationModal';
 import { useVoiceRecording } from '@/hooks/useVoiceRecording';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export interface ReviewData {
   stars: number;
@@ -23,6 +25,8 @@ const ReviewForm = ({ movieId, onSubmit, isSubmitting }: ReviewFormProps) => {
   const [stars, setStars] = useState(0);
   const [reviewText, setReviewText] = useState('');
   const [showTranslation, setShowTranslation] = useState(false);
+  const [hasReviewed, setHasReviewed] = useState(false);
+  const [isCheckingReviews, setIsCheckingReviews] = useState(true);
   const { user } = useAuth();
   
   const { 
@@ -46,6 +50,50 @@ const ReviewForm = ({ movieId, onSubmit, isSubmitting }: ReviewFormProps) => {
     }
   }, []);
   
+  // Check if user has already reviewed this movie
+  useEffect(() => {
+    const checkUserReviews = async () => {
+      if (!user) {
+        setIsCheckingReviews(false);
+        return;
+      }
+      
+      try {
+        setIsCheckingReviews(true);
+        
+        // Check in the main reviews table
+        const { data: mainReviews, error: mainError } = await supabase
+          .from('reviews')
+          .select('id')
+          .eq('movie_id', movieId)
+          .eq('user_id', user.id)
+          .maybeSingle();
+          
+        if (mainError) throw mainError;
+        
+        // Check in the legacy reviews table
+        const { data: legacyReviews, error: legacyError } = await supabase
+          .from('previous user reviews of a particular movie')
+          .select('id')
+          .eq('movie id', parseInt(movieId))
+          .eq('user id', user.id)
+          .maybeSingle();
+          
+        if (legacyError) throw legacyError;
+        
+        // User has reviewed if they exist in either table
+        setHasReviewed(!!mainReviews || !!legacyReviews);
+        
+      } catch (error) {
+        console.error('Error checking user reviews:', error);
+      } finally {
+        setIsCheckingReviews(false);
+      }
+    };
+    
+    checkUserReviews();
+  }, [user, movieId]);
+  
   const handleToggleRecording = () => {
     if (isRecording) {
       stopRecording();
@@ -63,13 +111,25 @@ const ReviewForm = ({ movieId, onSubmit, isSubmitting }: ReviewFormProps) => {
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!stars || !reviewText.trim()) return;
+    
+    if (!stars || !reviewText.trim()) {
+      toast.error('Please provide both a star rating and review text');
+      return;
+    }
+    
+    // Double check that user hasn't already submitted a review
+    if (hasReviewed) {
+      toast.error('You have already reviewed this movie');
+      return;
+    }
     
     await onSubmit({
       stars,
       review_text: reviewText,
     });
     
+    // After submission, update local state to prevent more reviews
+    setHasReviewed(true);
     setStars(0);
     setReviewText('');
   };
@@ -81,6 +141,23 @@ const ReviewForm = ({ movieId, onSubmit, isSubmitting }: ReviewFormProps) => {
         <Button asChild variant="outline">
           <a href="/login">Sign In</a>
         </Button>
+      </div>
+    );
+  }
+  
+  if (isCheckingReviews) {
+    return (
+      <div className="text-center py-6">
+        <p className="text-white/70 animate-pulse">Checking previous reviews...</p>
+      </div>
+    );
+  }
+  
+  if (hasReviewed) {
+    return (
+      <div className="text-center py-6 border border-white/10 rounded-md bg-movie-darker p-4">
+        <p className="text-white/70 mb-3">You have already reviewed this movie.</p>
+        <p className="text-white/50 text-sm">Each user can submit only one review per movie.</p>
       </div>
     );
   }

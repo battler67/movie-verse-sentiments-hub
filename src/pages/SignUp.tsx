@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Film, Mail, Lock, User, Github } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 const SignUp = () => {
   const [username, setUsername] = useState('');
@@ -14,6 +15,14 @@ const SignUp = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { user } = useAuth();
+  
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      navigate('/', { replace: true });
+    }
+  }, [user, navigate]);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,24 +39,47 @@ const SignUp = () => {
     
     try {
       setLoading(true);
+      
+      // First check if user already exists
+      const { data: existingUser, error: checkError } = await supabase
+        .from('user_profiles')
+        .select('email')
+        .eq('email', email)
+        .maybeSingle();
+        
+      if (existingUser) {
+        toast.error('This email is already registered. Please try logging in instead.');
+        return;
+      }
+      
+      // Sign up the user
       const { data, error } = await supabase.auth.signUp({
         email,
-        password,
-        options: {
-          data: {
-            username
-          },
-          // Remove email verification requirement
-          emailRedirectTo: 'https://movie-verse-sentiments-hub.lovable.app/'
-        }
+        password
       });
       
       if (error) {
         throw error;
       }
-
-      toast.success('Account created successfully! You can now log in.');
-      navigate('/login');
+      
+      // Create user profile
+      if (data.user) {
+        const { error: profileError } = await supabase
+          .from('user_profiles')
+          .insert({
+            id: data.user.id,
+            username,
+            email
+          });
+          
+        if (profileError) {
+          console.error('Error creating profile:', profileError);
+          // Continue anyway since the auth account was created
+        }
+        
+        toast.success('Account created successfully! You are now signed in.');
+        navigate('/');
+      }
     } catch (error: any) {
       if (error.message.includes('already registered')) {
         toast.error('This email is already registered. Please try logging in instead.');

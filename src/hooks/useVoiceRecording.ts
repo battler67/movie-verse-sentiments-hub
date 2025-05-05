@@ -1,5 +1,5 @@
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 
 export const useVoiceRecording = (onTranscriptionComplete: (text: string) => void) => {
@@ -7,6 +7,27 @@ export const useVoiceRecording = (onTranscriptionComplete: (text: string) => voi
   const [showSpeakDialog, setShowSpeakDialog] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recordingTimeoutRef = useRef<number | null>(null);
+  
+  // Effect to add a global click handler when speech dialog is open
+  useEffect(() => {
+    const handleClickOutside = () => {
+      if (showSpeakDialog && isRecording) {
+        stopRecording();
+      }
+    };
+    
+    if (showSpeakDialog) {
+      // Small delay to prevent the click that started recording from stopping it
+      setTimeout(() => {
+        document.addEventListener('click', handleClickOutside);
+      }, 100);
+    }
+    
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [showSpeakDialog, isRecording]);
 
   // Start recording using Web Speech API
   const startRecording = async () => {
@@ -25,47 +46,71 @@ export const useVoiceRecording = (onTranscriptionComplete: (text: string) => voi
       
       // Configure recognition
       recognition.lang = 'en-US'; // Set to English
-      recognition.continuous = false;
-      recognition.interimResults = false;
+      recognition.continuous = true; // Keep recording until stopped
+      recognition.interimResults = true; // Get interim results
       recognition.maxAlternatives = 1;
+      
+      let finalTranscript = '';
       
       // Set up event handlers
       recognition.onstart = () => {
         setIsRecording(true);
         setShowSpeakDialog(true); // Show dialog once
         setIsProcessing(false);
+        finalTranscript = '';
       };
       
       recognition.onresult = (event: SpeechRecognitionEvent) => {
-        const transcript = event.results[0][0].transcript;
-        if (transcript && transcript.trim()) {
-          onTranscriptionComplete(transcript);
-          toast.success("Speech converted to text!");
-        } else {
-          toast.error("No speech detected. Please try again.");
+        let interimTranscript = '';
+        
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          
+          if (event.results[i].isFinal) {
+            finalTranscript += ' ' + transcript;
+          } else {
+            interimTranscript += transcript;
+          }
+        }
+        
+        // Only append final transcripts to avoid duplicate text
+        if (finalTranscript.trim()) {
+          onTranscriptionComplete(finalTranscript.trim());
+          finalTranscript = ''; // Reset after sending
         }
       };
       
       recognition.onerror = (event: SpeechRecognitionError) => {
         console.error("Speech recognition error", event);
-        toast.error(`Error: ${event.error === 'no-speech' ? 'No speech detected' : event.error}`);
+        if (event.error !== 'no-speech') {
+          toast.error(`Error: ${event.error === 'no-speech' ? 'No speech detected' : event.error}`);
+        }
       };
       
       recognition.onend = () => {
+        // If this was triggered by timeout rather than stopRecording()
+        const wasStopped = !isRecording;
+        
         setIsRecording(false);
-        setShowSpeakDialog(false);
         setIsProcessing(false);
+        
+        // Only close the dialog if this wasn't part of the continuous recognition restart
+        if (wasStopped) {
+          setShowSpeakDialog(false);
+        } else if (isRecording) {
+          // Try to restart if we're still supposed to be recording
+          try {
+            recognition.start();
+          } catch (e) {
+            console.log("Could not restart recognition");
+            setIsRecording(false);
+            setShowSpeakDialog(false);
+          }
+        }
       };
       
       // Start recognition
       recognition.start();
-      
-      // Auto-stop after 10 seconds to prevent indefinite listening
-      setTimeout(() => {
-        if (isRecording && recognitionRef.current) {
-          stopRecording();
-        }
-      }, 10000);
       
     } catch (error) {
       // Fallback to media recorder if Web Speech API fails
@@ -118,15 +163,6 @@ export const useVoiceRecording = (onTranscriptionComplete: (text: string) => voi
       setIsRecording(true);
       setShowSpeakDialog(true);
       
-      // Stop recording after 5 seconds
-      setTimeout(() => {
-        if (mediaRecorder.state === 'recording') {
-          mediaRecorder.stop();
-          setIsRecording(false);
-          setShowSpeakDialog(false);
-        }
-      }, 5000);
-      
     } catch (error) {
       console.error("Fallback recording error:", error);
       toast.error("Could not access microphone. Please check permissions.");
@@ -147,6 +183,13 @@ export const useVoiceRecording = (onTranscriptionComplete: (text: string) => voi
     }
     
     setIsRecording(false);
+    setShowSpeakDialog(false);
+    
+    // Clear any pending timeouts
+    if (recordingTimeoutRef.current) {
+      clearTimeout(recordingTimeoutRef.current);
+      recordingTimeoutRef.current = null;
+    }
   };
   
   return {

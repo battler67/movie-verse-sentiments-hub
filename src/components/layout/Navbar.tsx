@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, Film, Bookmark, User, LogOut, X } from 'lucide-react';
@@ -25,6 +26,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const Navbar = () => {
   const { watchlist } = useWatchlist();
@@ -37,6 +39,7 @@ const Navbar = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -117,6 +120,13 @@ const Navbar = () => {
       searchInputRef.current.focus();
     }
   };
+  
+  // Fixed function for handling search result clicks on both desktop and mobile
+  const handleResultClick = (movieId: string) => {
+    setSearchQuery('');
+    setShowDropdown(false);
+    navigate(`/movie/${movieId}`);
+  };
 
   return (
     <nav className="bg-movie-darker border-b border-white/5 sticky top-0 z-50">
@@ -168,7 +178,7 @@ const Navbar = () => {
                         <div 
                           key={movie.id}
                           className="flex items-center p-2 hover:bg-white/5 cursor-pointer"
-                          onClick={() => handleSearchSelect(movie.id)}
+                          onClick={() => handleResultClick(movie.id)}
                         >
                           {movie.posterPath && movie.posterPath !== 'https://placeholder.svg' ? (
                             <img 
@@ -209,7 +219,7 @@ const Navbar = () => {
                       {searchResults.map((movie) => (
                         <CommandItem 
                           key={movie.id} 
-                          onSelect={() => handleSearchSelect(movie.id)}
+                          onSelect={() => handleResultClick(movie.id)}
                           className="cursor-pointer"
                         >
                           <div className="flex items-center space-x-2">
@@ -338,7 +348,7 @@ const Navbar = () => {
                       <div 
                         key={movie.id}
                         className="flex items-center p-2 hover:bg-white/5 cursor-pointer"
-                        onClick={() => handleSearchSelect(movie.id)}
+                        onClick={() => handleResultClick(movie.id)}
                       >
                         {movie.posterPath && movie.posterPath !== 'https://placeholder.svg' ? (
                           <img 
