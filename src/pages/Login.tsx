@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,8 +15,38 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showConfirmationDialog, setShowConfirmationDialog] = useState(false);
-  const { resendConfirmationEmail } = useAuth();
+  const { resendConfirmationEmail, sendCustomConfirmationEmail } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Check for confirmation tokens in URL (for email verification)
+  useEffect(() => {
+    const handleEmailConfirmation = async () => {
+      const params = new URLSearchParams(location.search);
+      const confirmationToken = params.get('confirmation_token');
+      
+      if (confirmationToken) {
+        try {
+          const { error } = await supabase.auth.verifyOtp({
+            token_hash: confirmationToken,
+            type: 'email_confirmation'
+          });
+          
+          if (error) {
+            throw error;
+          }
+          
+          toast.success('Email verified successfully! You can now log in.');
+          navigate('/login', { replace: true });
+        } catch (error: any) {
+          console.error('Error verifying email:', error);
+          toast.error('Failed to verify email: ' + error.message);
+        }
+      }
+    };
+    
+    handleEmailConfirmation();
+  }, [location, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,7 +73,7 @@ const Login = () => {
       }
       
       toast.success('Signed in successfully!');
-      navigate('/');
+      navigate('/', { replace: true });
     } catch (error: any) {
       toast.error(error.message || 'Error signing in');
     } finally {
@@ -57,7 +87,7 @@ const Login = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
-          redirectTo: `${window.location.origin}/`
+          redirectTo: `https://movie-verse-sentiments-hub.lovable.app/`
         }
       });
       
@@ -76,7 +106,7 @@ const Login = () => {
       return;
     }
     
-    await resendConfirmationEmail(email);
+    await sendCustomConfirmationEmail(email, 'resend');
   };
 
   return (

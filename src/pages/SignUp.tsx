@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -16,7 +15,7 @@ const SignUp = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showConfirmationDialog, setShowConfirmationDialog] = useState(false);
-  const { resendConfirmationEmail } = useAuth();
+  const { resendConfirmationEmail, sendCustomConfirmationEmail } = useAuth();
   const navigate = useNavigate();
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -34,19 +33,32 @@ const SignUp = () => {
     
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             username
           },
-          emailRedirectTo: `${window.location.origin}/`
+          emailRedirectTo: 'https://movie-verse-sentiments-hub.lovable.app/'
         }
       });
       
       if (error) {
         throw error;
+      }
+
+      // After successful signup, send a custom confirmation email
+      if (data?.user) {
+        try {
+          // The token would be used by Supabase for verification
+          // For security, we generate a new token here instead of exposing the actual one
+          await sendCustomConfirmationEmail(email, data.user.id);
+        } catch (emailError) {
+          console.error("Error sending custom confirmation email:", emailError);
+          // Fall back to default email if custom one fails
+          await resendConfirmationEmail(email);
+        }
       }
       
       setShowConfirmationDialog(true);
@@ -213,7 +225,7 @@ const SignUp = () => {
               <Button variant="outline" onClick={() => navigate('/login')}>
                 Go to Login
               </Button>
-              <Button onClick={handleResendEmail}>
+              <Button onClick={() => sendCustomConfirmationEmail(email, 'resend')}>
                 Resend Email
               </Button>
             </div>

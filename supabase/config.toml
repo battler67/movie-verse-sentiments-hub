@@ -6,3 +6,5 @@ project_id = "uxvhloltifucsvgawnce"
 [functions.deduplicate-reviews]
 [functions.moderate-review]
 [functions.generate-review-summary]
+[functions.send-confirmation-email]
+
