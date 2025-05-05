@@ -7,12 +7,16 @@ import { Label } from '@/components/ui/label';
 import { Film, Mail, Lock, User, Github } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useAuth } from '@/contexts/AuthContext';
 
 const SignUp = () => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showConfirmationDialog, setShowConfirmationDialog] = useState(false);
+  const { resendConfirmationEmail } = useAuth();
   const navigate = useNavigate();
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -36,7 +40,8 @@ const SignUp = () => {
         options: {
           data: {
             username
-          }
+          },
+          emailRedirectTo: `${window.location.origin}/`
         }
       });
       
@@ -44,10 +49,13 @@ const SignUp = () => {
         throw error;
       }
       
-      toast.success('Account created successfully! Check your email for verification.');
-      navigate('/');
+      setShowConfirmationDialog(true);
     } catch (error: any) {
-      toast.error(error.message || 'Error creating account');
+      if (error.message.includes('already registered')) {
+        toast.error('This email is already registered. Please try logging in instead.');
+      } else {
+        toast.error(error.message || 'Error creating account');
+      }
     } finally {
       setLoading(false);
     }
@@ -70,6 +78,15 @@ const SignUp = () => {
       toast.error(error.message || 'Error signing up with GitHub');
       setLoading(false);
     }
+  };
+
+  const handleResendEmail = async () => {
+    if (!email) {
+      toast.error('Please enter your email address');
+      return;
+    }
+    
+    await resendConfirmationEmail(email);
   };
 
   return (
@@ -178,6 +195,31 @@ const SignUp = () => {
           </Link>
         </p>
       </div>
+
+      <Dialog open={showConfirmationDialog} onOpenChange={setShowConfirmationDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Check your email</DialogTitle>
+            <DialogDescription>
+              We've sent a confirmation link to <span className="font-medium">{email}</span>. 
+              Click the link in the email to activate your account.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 mt-4">
+            <p className="text-sm text-muted-foreground">
+              If you don't see the email in your inbox, check your spam folder.
+            </p>
+            <div className="flex justify-between">
+              <Button variant="outline" onClick={() => navigate('/login')}>
+                Go to Login
+              </Button>
+              <Button onClick={handleResendEmail}>
+                Resend Email
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

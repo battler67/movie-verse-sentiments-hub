@@ -9,13 +9,15 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signOut: () => Promise<void>;
+  resendConfirmationEmail: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   session: null,
   loading: true,
-  signOut: async () => {}
+  signOut: async () => {},
+  resendConfirmationEmail: async () => {}
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -36,6 +38,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           toast.success('Signed in successfully!');
         } else if (event === 'SIGNED_OUT') {
           console.log('User signed out');
+        } else if (event === 'USER_UPDATED') {
+          console.log('User updated:', session?.user);
         }
       }
     );
@@ -59,8 +63,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const resendConfirmationEmail = async (email: string) => {
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email,
+      });
+      
+      if (error) {
+        throw error;
+      }
+      
+      toast.success('Confirmation email sent! Please check your inbox and spam folder.');
+    } catch (error: any) {
+      toast.error(error.message || 'Error sending confirmation email');
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, session, loading, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, signOut, resendConfirmationEmail }}>
       {children}
     </AuthContext.Provider>
   );

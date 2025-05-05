@@ -7,11 +7,15 @@ import { Label } from '@/components/ui/label';
 import { Film, Mail, Lock, Github } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showConfirmationDialog, setShowConfirmationDialog] = useState(false);
+  const { resendConfirmationEmail } = useAuth();
   const navigate = useNavigate();
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -30,7 +34,12 @@ const Login = () => {
       });
       
       if (error) {
-        throw error;
+        if (error.message.includes('Email not confirmed')) {
+          setShowConfirmationDialog(true);
+        } else {
+          throw error;
+        }
+        return;
       }
       
       toast.success('Signed in successfully!');
@@ -59,6 +68,15 @@ const Login = () => {
       toast.error(error.message || 'Error signing in with GitHub');
       setLoading(false);
     }
+  };
+
+  const handleResendEmail = async () => {
+    if (!email) {
+      toast.error('Please enter your email address');
+      return;
+    }
+    
+    await resendConfirmationEmail(email);
   };
 
   return (
@@ -156,6 +174,28 @@ const Login = () => {
           </Link>
         </p>
       </div>
+
+      <Dialog open={showConfirmationDialog} onOpenChange={setShowConfirmationDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Email not confirmed</DialogTitle>
+            <DialogDescription>
+              Your account needs to be activated. We've sent a confirmation link to <span className="font-medium">{email}</span>.
+              Click the link in the email to activate your account.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 mt-4">
+            <p className="text-sm text-muted-foreground">
+              If you don't see the email in your inbox, check your spam folder or click below to resend.
+            </p>
+            <div className="flex justify-end">
+              <Button onClick={handleResendEmail}>
+                Resend Confirmation Email
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
