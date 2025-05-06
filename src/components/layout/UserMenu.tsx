@@ -25,6 +25,14 @@ const UserMenu: React.FC = () => {
     navigate('/');
   };
 
+  // Get the first letter for the avatar, safely handling undefined email
+  const getAvatarInitial = () => {
+    if (user?.email && user.email.length > 0) {
+      return user.email[0].toUpperCase();
+    }
+    return 'U'; // Default fallback if email is undefined or empty
+  };
+
   if (!user) {
     return (
       <Link to="/login">
@@ -62,7 +70,7 @@ const UserMenu: React.FC = () => {
             <Avatar className="h-8 w-8 border border-white/10">
               <AvatarImage src="" />
               <AvatarFallback className="bg-movie-primary/20 text-movie-primary">
-                {user.email && user.email[0] ? user.email[0].toUpperCase() : 'U'}
+                {getAvatarInitial()}
               </AvatarFallback>
             </Avatar>
           </button>
