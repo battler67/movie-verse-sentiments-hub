@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, Film, Bookmark, User, LogOut, X } from 'lucide-react';
@@ -278,7 +277,7 @@ const Navbar = () => {
                       <Avatar className="h-8 w-8 border border-white/10">
                         <AvatarImage src="" />
                         <AvatarFallback className="bg-movie-primary/20 text-movie-primary">
-                          {user.email?.[0].toUpperCase() || 'U'}
+                          {user.email && user.email[0] ? user.email[0].toUpperCase() : 'U'}
                         </AvatarFallback>
                       </Avatar>
                     </button>

@@ -118,6 +118,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return false;
       }
 
+      // If special_keyword field doesn't exist in user_profiles table
+      if (!('special_keyword' in userProfile)) {
+        toast.error('Special keyword feature is not available');
+        return false;
+      }
+
       // If special keyword doesn't match
       if (userProfile.special_keyword !== keyword) {
         toast.error('Invalid special keyword');
