@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from "@/components/ui/button";
@@ -128,10 +127,9 @@ const ReviewForm = ({ movieId, onSubmit, isSubmitting }: ReviewFormProps) => {
       review_text: reviewText,
     });
     
-    // After submission, update local state to prevent more reviews
-    setHasReviewed(true);
-    setStars(0);
-    setReviewText('');
+    // Note: We don't reset the form here anymore because
+    // the review might be rejected due to spam content
+    // If it's successful, the hasReviewed state will be updated by the parent component
   };
   
   if (!user) {

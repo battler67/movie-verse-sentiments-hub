@@ -20,7 +20,7 @@ interface ReviewSectionProps {
 
 const ReviewSection = ({ movieId }: ReviewSectionProps) => {
   const { user } = useAuth();
-  const { handleSubmit, isSubmitting } = useReviewSubmission(movieId);
+  const { handleSubmit, isSubmitting, SpamDialog } = useReviewSubmission(movieId);
   const { reviews, setReviews, isLoading } = useReviewManagement(movieId);
   const { selectedSentiment, setSelectedSentiment, filteredReviews, resetFilter } = useReviewFilters(reviews);
   const { handleLikeReview, handleDislikeReview, isProcessing } = useReviewInteractions(movieId, setReviews);
@@ -142,6 +142,9 @@ const ReviewSection = ({ movieId }: ReviewSectionProps) => {
           isProcessing={isProcessing}
         />
       )}
+      
+      {/* Render the spam detection dialog */}
+      <SpamDialog />
     </div>
   );
 };
